@@ -1,0 +1,12 @@
+$ORIGIN test.local.
+$TTL 120
+@	IN	SOA ns.test.local. no-op.test.local. (
+				1630411904 ; serial
+				7200             ; refresh (2 hours), only affects secondary dns servers
+				3600             ; retry (1 hour), only affects secondary dns servers
+				604800           ; expire (1 week), only affects secondary dns servers
+				3600     ;
+				)
+
+@ IN A 127.0.0.1
+* IN A 127.0.0.1

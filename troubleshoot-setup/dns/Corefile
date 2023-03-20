@@ -1,0 +1,14 @@
+.:1053 {
+    #Because some distros have a localhost dns setup, we need to be picky on the interface we
+    #listen to. we can't just use 0.0.0.0, it will fail.
+    bind 127.0.0.1
+    auto {
+        directory ./zonefiles (.*) {1}
+        reload 5s
+    }
+    reload 5s
+    loop
+    nsid eric
+    errors
+    log
+}
