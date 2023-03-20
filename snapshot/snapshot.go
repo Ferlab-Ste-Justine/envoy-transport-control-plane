@@ -1,8 +1,8 @@
 package snapshot
 
 import (
-	"ferlab/k8-lb-cp/parameters"
-	"ferlab/k8-lb-cp/utils"
+	"ferlab/envoy-transport-control-plane/parameters"
+	"ferlab/envoy-transport-control-plane/utils"
 
 	"fmt"
 	"time"
@@ -24,18 +24,6 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-/*
-  - 
-    load_assignment:
-      cluster_name: nfs_server
-      endpoints:
-        - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: ${nfs_server.domain}
-                    port_value: ${nfs_server.port}
-*/
 func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsServer) *cluster.Cluster {
 	dnsResolvers := []*core.Address{}
 	for _, dnsServer := range dnsServers {

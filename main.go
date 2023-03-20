@@ -6,11 +6,11 @@ import (
 	"net"
 	"time"
 
-	"ferlab/k8-lb-cp/callbacks"
-	"ferlab/k8-lb-cp/logger"
-	"ferlab/k8-lb-cp/parameters"
-	"ferlab/k8-lb-cp/snapshot"
-	"ferlab/k8-lb-cp/utils"
+	"ferlab/envoy-transport-control-plane/callbacks"
+	"ferlab/envoy-transport-control-plane/logger"
+	"ferlab/envoy-transport-control-plane/parameters"
+	"ferlab/envoy-transport-control-plane/snapshot"
+	"ferlab/envoy-transport-control-plane/utils"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
@@ -64,6 +64,4 @@ func main() {
 	log.Infof("Control plane server listening on %d\n", 18000)
 	srvErr := gsrv.Serve(lis)
 	utils.AbortOnErr(srvErr)
-
-	//log.Infof("Test")
 }

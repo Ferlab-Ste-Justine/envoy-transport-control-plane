@@ -1,4 +1,4 @@
-module ferlab/k8-lb-cp
+module ferlab/envoy-transport-control-plane
 
 go 1.18
 

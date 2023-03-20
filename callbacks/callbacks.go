@@ -3,7 +3,7 @@ package callbacks
 import (
 	"context"
 
-	"ferlab/k8-lb-cp/logger"
+	"ferlab/envoy-transport-control-plane/logger"
 
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
