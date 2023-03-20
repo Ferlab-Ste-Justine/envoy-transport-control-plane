@@ -1,6 +1,10 @@
 package parameters
 
-import "time"
+import (
+	"time"
+
+	/*yaml "gopkg.in/yaml.v2"*/
+)
 
 type DnsServer struct {
 	Ip   string
@@ -10,24 +14,24 @@ type DnsServer struct {
 type HealthCheck struct {
 	Timeout            time.Duration
 	Interval           time.Duration
-	HealthyThreshold   uint32
-	UnhealthyThreshold uint32
+	HealthyThreshold   uint32        `yaml:"healthy_threshold"`
+	UnhealthyThreshold uint32        `yaml:"unhealthy_threshold"`
 }
 
 type ExposedService struct {
 	Name           string
-	ListeningPort  uint32
-	ClusterDomain  string
-	ClusterPort    uint32
-	IdleTimeout    time.Duration
-	MaxConnections uint64
-	HealthCheck   HealthCheck
+	ListeningPort  uint32        `yaml:"listening_port"`
+	ListeningIp    string        `yaml:"listening_ip"`
+	ClusterDomain  string        `yaml:"cluster_domain"`
+	ClusterPort    uint32        `yaml:"cluster_port"`
+	IdleTimeout    time.Duration `yaml:"idle_timeout"`
+	MaxConnections uint64        `yaml:"max_connections"`
+	HealthCheck    HealthCheck   `yaml:"health_check"`
 }
 
 type Parameters struct {
-	DnsServers    []DnsServer
-	BindingIp     string
-    Services      []ExposedService
+	DnsServers []DnsServer      `yaml:"dns_servers"`
+    Services   []ExposedService
 }
 
 func GetParameters() Parameters {
@@ -41,11 +45,11 @@ func GetParameters() Parameters {
 				Port: 1053,
 			},
 		},
-		BindingIp: "127.0.0.1",
 		Services: []ExposedService{
 			ExposedService{
 				Name: "server1",
 				ListeningPort: 9081,
+				ListeningIp: "127.0.0.1",
 				ClusterDomain: "test.local",
 				ClusterPort: 8081,
 				IdleTimeout: timeout,
@@ -60,6 +64,7 @@ func GetParameters() Parameters {
 			ExposedService{
 				Name: "server2",
 				ListeningPort: 9082,
+				ListeningIp: "127.0.0.1",
 				ClusterDomain: "test.local",
 				ClusterPort: 8082,
 				IdleTimeout: timeout,
@@ -74,6 +79,7 @@ func GetParameters() Parameters {
 			ExposedService{
 				Name: "server3",
 				ListeningPort: 9083,
+				ListeningIp: "127.0.0.1",
 				ClusterDomain: "test.local",
 				ClusterPort: 8083,
 				IdleTimeout: timeout,

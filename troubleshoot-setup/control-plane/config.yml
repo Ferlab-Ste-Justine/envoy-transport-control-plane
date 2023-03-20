@@ -1,10 +1,14 @@
-etcd:
+etcd_client:
   prefix: /envoy/
   endpoints:
-    - "127.0.0.1:27019"
-  ca_cert: ""
-  client_cert: ""
-  client_key: ""
+    - "127.0.0.1:2379"
+  connection_timeout: "5m"
+  request_timeout: "5m"
+  retries: 20
+  auth:
+    ca_cert: ""
+    client_cert: ""
+    client_key: ""
 server:
   port: 18000
   bind_ip: "0.0.0.0"

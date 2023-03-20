@@ -112,7 +112,7 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 	}
 }
 
-func getListener(service parameters.ExposedService, dnsServers []parameters.DnsServer, bindingIp string) *listener.Listener {
+func getListener(service parameters.ExposedService, dnsServers []parameters.DnsServer) *listener.Listener {
 	connLimit, err := anypb.New(&connlimit.ConnectionLimit{
 		StatPrefix: fmt.Sprintf("%s_listener_connection_limit", service.Name),
 		MaxConnections: &wrapperspb.UInt64Value{Value: service.MaxConnections},
@@ -155,7 +155,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			Address: &core.Address_SocketAddress{
 				SocketAddress: &core.SocketAddress{
 					Protocol: core.SocketAddress_TCP,
-					Address:  bindingIp,
+					Address: service.ListeningIp,
 					PortSpecifier: &core.SocketAddress_PortValue{
 						PortValue: service.ListeningPort,
 					},
@@ -194,7 +194,7 @@ func GetSnapshot(params parameters.Parameters) (*cache.Snapshot, error) {
 		)
 		resources[resource.ListenerType] = append(
 			resources[resource.ListenerType],
-			getListener(service, params.DnsServers, params.BindingIp),
+			getListener(service, params.DnsServers),
 		)
 	}
 

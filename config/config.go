@@ -3,37 +3,45 @@ package config
 import (
 	"errors"
 	"fmt"
-	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
 	"strings"
 
 	"ferlab/envoy-transport-control-plane/logger"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
-type EtcdConfig struct {
-	Prefix         string
-	Endpoints      []string
-	CaCert         string   `yaml:"ca_cert"`
-	ClientCert     string   `yaml:"client_cert"`
-	ClientKey      string   `yaml:"client_key"`
-	Username       string
-	Password       string
+type EtcdClientAuthConfig struct {
+	CaCert            string         `yaml:"ca_cert"`
+	ClientCert        string         `yaml:"client_cert"`
+	ClientKey         string         `yaml:"client_key"`
+	Username          string
+	Password          string
+}
+
+type EtcdClientConfig struct {
+	Prefix            string
+	Endpoints         []string
+	ConnectionTimeout time.Duration	`yaml:"connection_timeout"`
+	RequestTimeout    time.Duration `yaml:"request_timeout"`
+	Retries           uint64
+	Auth              EtcdClientAuthConfig
 }
 
 type ServerConfig struct {
 	Port             int64
 	BindIp           string        `yaml:"bind_ip"`
-	MaxConnections   int64         `yaml:"max_connections"`
+	MaxConnections   uint32        `yaml:"max_connections"`
 	KeepAliveTime    time.Duration `yaml:"keep_alive_time"`
 	KeepAliveTimeout time.Duration `yaml:"keep_alive_timeout"`
 	KeepAliveMinTime time.Duration `yaml:"keep_alive_min_time"`
 }
 
 type Config struct {
-	Etcd EtcdConfig
-	Server ServerConfig
-	LogLevel string     `yaml:"log_level"`
+	EtcdClient EtcdClientConfig `yaml:"etcd_client"`
+	Server     ServerConfig
+	LogLevel   string           `yaml:"log_level"`
 }
 
 func (c *Config) GetLogLevel() int64 {

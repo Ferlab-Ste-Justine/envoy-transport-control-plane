@@ -25,7 +25,7 @@ import (
 func GetGrpcServer(conf config.Config) *grpc.Server {
 	var grpcOptions []grpc.ServerOption
 	grpcOptions = append(grpcOptions,
-		grpc.MaxConcurrentStreams(1000000),
+		grpc.MaxConcurrentStreams(conf.Server.MaxConnections),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Time:    conf.Server.KeepAliveTime,
 			Timeout: conf.Server.KeepAliveTimeout,
