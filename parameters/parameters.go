@@ -64,8 +64,7 @@ func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64,
 
 	for _, val := range info {
 		var params Parameters
-		key := strings.TrimPrefix(val.Key, prefix)
-		nodeId := strings.Split(key, "/")[0]
+		nodeId := strings.TrimPrefix(val.Key, prefix)
 		err = yaml.Unmarshal([]byte(val.Value), &params)
 		if err != nil {
 			return result, revision, err
@@ -90,8 +89,7 @@ func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retriev
 		}
 
 		for _, key := range change.Changes.Deletions {
-			key = strings.TrimPrefix(key, prefix)
-			nodeId := strings.Split(key, "/")[0]
+			nodeId := strings.TrimPrefix(key, prefix)
 			retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{
 				NodeId: nodeId,
 				Delete: true,
@@ -100,8 +98,7 @@ func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retriev
 
 		for key, val := range change.Changes.Upserts {
 			var params Parameters
-			key = strings.TrimPrefix(key, prefix)
-			nodeId := strings.Split(key, "/")[0]
+			nodeId := strings.TrimPrefix(key, prefix)
 			err := yaml.Unmarshal([]byte(val), &params)
 			if err != nil {
 				retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: err}

@@ -1,14 +1,14 @@
 etcd_client:
   prefix: /envoy/
   endpoints:
-    - "127.0.0.1:2379"
+    - "127.0.0.1:32279"
   connection_timeout: "5m"
   request_timeout: "5m"
   retries: 20
   auth:
-    ca_cert: ""
-    client_cert: ""
-    client_key: ""
+    ca_cert: "etcd_ca.crt"
+    client_cert: "etcd_root.crt"
+    client_key: "etcd_root.key"
 server:
   port: 18000
   bind_ip: "0.0.0.0"

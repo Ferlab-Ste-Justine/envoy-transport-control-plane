@@ -1,1 +1,7 @@
 envoy-transport-control-plane
+test-setup/*/.terraform/
+test-setup/*/.terraform.lock.hcl
+test-setup/*/terraform.tfstate
+test-setup/*/terraform.tfstate.backup
+test-setup/*/*.crt
+test-setup/*/*.key
