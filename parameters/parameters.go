@@ -1,6 +1,7 @@
 package parameters
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -51,6 +52,7 @@ type NodeParametersRetrieval struct {
 }
 
 type Retriever struct {
+	Logger logger.Logger
 	Client *client.EtcdClient
 }
 
@@ -58,17 +60,21 @@ func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64,
 	result := []NodeParameters{}
 	
 	info, revision, err := r.Client.GetPrefix(prefix)
+	fmt.Println(revision)
 	if err != nil {
 		return result, revision, err
 	}
 
 	for _, val := range info {
-		var params Parameters
 		nodeId := strings.TrimPrefix(val.Key, prefix)
+
+		var params Parameters
 		err = yaml.Unmarshal([]byte(val.Value), &params)
 		if err != nil {
 			return result, revision, err
 		}
+		
+		r.Logger.Infof("[Etcd] Adding snapshot for node %s on boot", nodeId)
 		result = append(result, NodeParameters{
 			NodeId: nodeId,
 			Delete: false,
@@ -90,6 +96,8 @@ func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retriev
 
 		for _, key := range change.Changes.Deletions {
 			nodeId := strings.TrimPrefix(key, prefix)
+			
+			r.Logger.Infof("[Etcd] Removing snapshot for node %s on watch", nodeId)
 			retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{
 				NodeId: nodeId,
 				Delete: true,
@@ -97,13 +105,16 @@ func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retriev
 		}
 
 		for key, val := range change.Changes.Upserts {
-			var params Parameters
 			nodeId := strings.TrimPrefix(key, prefix)
+
+			var params Parameters
 			err := yaml.Unmarshal([]byte(val), &params)
 			if err != nil {
 				retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: err}
 				return
 			}
+
+			r.Logger.Infof("[Etcd] Adding/updating snapshot for node %s on watch", nodeId)
 			retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{
 				NodeId: nodeId,
 				Delete: false,
@@ -146,7 +157,7 @@ func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (c
 			paramsChan <- NodeParametersRetrieval{NodeParameters: nodeParams, Error: nil}
 		}
 
-		r.watchPrefixNodeParams(conf.EtcdClient.Prefix, revision, paramsChan)
+		r.watchPrefixNodeParams(conf.EtcdClient.Prefix, revision + 1, paramsChan)
 	}()
 
 	return paramsChan

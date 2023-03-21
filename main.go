@@ -16,7 +16,7 @@ func main() {
 
 	log.LogLevel = conf.GetLogLevel()
 
-	paramsRetriever := parameters.Retriever{}
+	paramsRetriever := parameters.Retriever{Logger: log}
 	ca, caErrChan := server.SetCache(
 		paramsRetriever.RetrieveParameters(conf, log), 
 		log,

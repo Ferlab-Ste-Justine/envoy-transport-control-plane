@@ -107,7 +107,7 @@ func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (cont
 		clusterservice.RegisterClusterDiscoveryServiceServer(gsrv, srv)
 		listenerservice.RegisterListenerDiscoveryServiceServer(gsrv, srv)
 
-		log.Infof("Control plane server listening on %s:%d\n", conf.Server.BindIp, conf.Server.Port)
+		log.Infof("[server] Listening on %s:%d\n", conf.Server.BindIp, conf.Server.Port)
 		srvErr := gsrv.Serve(lis)
 		if srvErr != nil {
 			errChan <- srvErr
