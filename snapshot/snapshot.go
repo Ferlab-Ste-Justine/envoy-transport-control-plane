@@ -2,7 +2,6 @@ package snapshot
 
 import (
 	"ferlab/envoy-transport-control-plane/parameters"
-	"ferlab/envoy-transport-control-plane/utils"
 
 	"fmt"
 	"time"
@@ -24,7 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsServer) *cluster.Cluster {
+func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsServer) (*cluster.Cluster, error) {
 	dnsResolvers := []*core.Address{}
 	for _, dnsServer := range dnsServers {
 		dnsResolvers = append(dnsResolvers, &core.Address{
@@ -42,7 +41,9 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 		Resolvers: dnsResolvers,
 		UseResolversAsFallback: false,
 	})
-	utils.AbortOnErr(err)
+	if err != nil {
+		return nil, err
+	}
 	
 	return &cluster.Cluster{
 		Name: service.Name,
@@ -109,15 +110,17 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 				},
 			},
 		},
-	}
+	}, nil
 }
 
-func getListener(service parameters.ExposedService, dnsServers []parameters.DnsServer) *listener.Listener {
+func getListener(service parameters.ExposedService, dnsServers []parameters.DnsServer) (*listener.Listener, error) {
 	connLimit, err := anypb.New(&connlimit.ConnectionLimit{
 		StatPrefix: fmt.Sprintf("%s_listener_connection_limit", service.Name),
 		MaxConnections: &wrapperspb.UInt64Value{Value: service.MaxConnections},
 	})
-	utils.AbortOnErr(err)
+	if err != nil {
+		return nil, err
+	}
 
 	/*
               access_log:
@@ -147,7 +150,9 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 		},*/
 	})
-	utils.AbortOnErr(err)
+	if err != nil {
+		return nil, err
+	}
 	
 	return &listener.Listener{
 		Name: service.Name,
@@ -178,7 +183,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 				},
 		    },
 		}},
-	}
+	}, nil
 }
 
 func GetSnapshot(params parameters.Parameters) (*cache.Snapshot, error) {
@@ -188,13 +193,23 @@ func GetSnapshot(params parameters.Parameters) (*cache.Snapshot, error) {
 	}
 
 	for _, service := range params.Services {
+		clust, clustErr := getCluster(service, params.DnsServers)
+		if clustErr != nil {
+			return nil, clustErr
+		}
+
+		list, listErr := getListener(service, params.DnsServers)
+		if listErr != nil {
+			return nil, listErr
+		}
+
 		resources[resource.ClusterType] = append(
 			resources[resource.ClusterType],
-			getCluster(service, params.DnsServers),
+			clust,
 		)
 		resources[resource.ListenerType] = append(
 			resources[resource.ListenerType],
-			getListener(service, params.DnsServers),
+			list,
 		)
 	}
 

@@ -1,13 +1,14 @@
 package utils
 
 import (
-	"fmt"
 	"os"
+
+	"ferlab/envoy-transport-control-plane/logger"
 )
 
-func AbortOnErr(err error) {
+func AbortOnErr(err error, log logger.Logger) {
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf(err.Error())
 		os.Exit(1)
 	}
 }
