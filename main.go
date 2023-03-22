@@ -12,10 +12,18 @@ import (
 	"ferlab/envoy-transport-control-plane/utils"
 )
 
+func getConfigFilePath() string {
+	path := os.Getenv("ENVOY_TCP_CONFIG_FILE")
+	if path == "" {
+		return "config.yml"
+	}
+	return path
+}
+
 func main() {
 	log := logger.Logger{LogLevel: logger.ERROR}
 
-	conf, confErr := config.GetConfig("config.yml")
+	conf, confErr := config.GetConfig(getConfigFilePath())
 	utils.AbortOnErr(confErr, log)
 
 	log.LogLevel = conf.GetLogLevel()
