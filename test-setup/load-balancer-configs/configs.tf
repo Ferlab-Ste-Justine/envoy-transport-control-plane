@@ -9,14 +9,15 @@ module "envoy_one_configs" {
     }]
     services = [
       {
-        name            = "server1"
-        listening_port  = 9081
-        listening_ip    = "127.0.0.1"
-        cluster_domain  = "test.local"
-        cluster_port    = 8081
-	    idle_timeout    = "10s"
-        max_connections = 100
-        health_check    = {
+        name              = "server1"
+        listening_port    = 9081
+        listening_ip      = "127.0.0.1"
+        cluster_domain    = "test.local"
+        cluster_port      = 8081
+	    idle_timeout      = "10s"
+        max_connections   = 100
+        access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
+        health_check      = {
           timeout             = "10s"
           interval            = "30s"
           healthy_threshold   = 1
@@ -24,14 +25,15 @@ module "envoy_one_configs" {
         }
       },
       {
-        name            = "server2"
-        listening_port  = 9082
-        listening_ip    = "127.0.0.1"
-        cluster_domain  = "test.local"
-        cluster_port    = 8082
-	    idle_timeout    = "10s"
-        max_connections = 100
-        health_check    = {
+        name              = "server2"
+        listening_port    = 9082
+        listening_ip      = "127.0.0.1"
+        cluster_domain    = "test.local"
+        cluster_port      = 8082
+	    idle_timeout      = "10s"
+        max_connections   = 100
+        access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
+        health_check      = {
           timeout             = "10s"
           interval            = "30s"
           healthy_threshold   = 1
@@ -39,14 +41,15 @@ module "envoy_one_configs" {
         }
       },
       {
-        name            = "server3"
-        listening_port  = 9083
-        listening_ip    = "127.0.0.1"
-        cluster_domain  = "test.local"
-        cluster_port    = 8083
-	    idle_timeout    = "10s"
-        max_connections = 100
-        health_check    = {
+        name              = "server3"
+        listening_port    = 9083
+        listening_ip      = "127.0.0.1"
+        cluster_domain    = "test.local"
+        cluster_port      = 8083
+	    idle_timeout      = "10s"
+        max_connections   = 100
+        access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
+        health_check      = {
           timeout             = "10s"
           interval            = "30s"
           healthy_threshold   = 1
@@ -75,6 +78,7 @@ module "envoy_two_configs" {
         cluster_port    = 8081
 	    idle_timeout    = "10s"
         max_connections = 100
+        access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check    = {
           timeout             = "10s"
           interval            = "30s"
@@ -90,6 +94,7 @@ module "envoy_two_configs" {
         cluster_port    = 8082
 	    idle_timeout    = "10s"
         max_connections = 100
+        access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check    = {
           timeout             = "10s"
           interval            = "30s"
@@ -105,6 +110,7 @@ module "envoy_two_configs" {
         cluster_port    = 8083
 	    idle_timeout    = "10s"
         max_connections = 100
+        access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check    = {
           timeout             = "10s"
           interval            = "30s"

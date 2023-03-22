@@ -10,8 +10,8 @@ import (
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
-	//accesslog "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
-	//stream "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/stream/v3"
+	accesslog "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
+	stream "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/stream/v3"
 	tcpproxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	connlimit "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/connection_limit/v3"
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
@@ -122,18 +122,23 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 		return nil, err
 	}
 
-	/*
-              access_log:
-                - name: envoy.access_loggers.stdout
-                  typed_config:
-                    "@type": type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
-	*/
-	/*stdoutLogs, lErr := anypb.New(&stream.StdoutAccessLog{
-		AccessLogFormat: stream.StdoutAccessLog_LogFormat{
-			LogFormat: &
-		}
+	stdoutLogs, lErr := anypb.New(&stream.StdoutAccessLog{
+		AccessLogFormat: &stream.StdoutAccessLog_LogFormat{
+			LogFormat: &core.SubstitutionFormatString{
+				Format: &core.SubstitutionFormatString_TextFormatSource{
+					TextFormatSource: &core.DataSource{
+						Specifier: &core.DataSource_InlineString{
+							InlineString: service.AccessLogFormat,
+						},
+					},
+				},
+			},
+		},
 	})
-	utils.AbortOnErr(lErr)*/
+	if lErr != nil {
+		return nil, lErr
+	}
+
 	tcpProxy, err := anypb.New(&tcpproxy.TcpProxy{
 		StatPrefix: fmt.Sprintf("%s_listener_tcp_proxy", service.Name),
 		ClusterSpecifier: &tcpproxy.TcpProxy_Cluster{service.Name},
@@ -141,14 +146,14 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
 			Nanos: int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
 		},
-		/*AccessLog: []*accesslog.AccessLog{
+		AccessLog: []*accesslog.AccessLog{
 			&accesslog.AccessLog{
 				Name: fmt.Sprintf("%s_listener_tcp_log", service.Name),
 				ConfigType: &accesslog.AccessLog_TypedConfig{
 					TypedConfig: stdoutLogs,
 				},
 			},
-		},*/
+		},
 	})
 	if err != nil {
 		return nil, err
