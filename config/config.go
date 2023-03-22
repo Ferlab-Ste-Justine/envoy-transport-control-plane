@@ -12,12 +12,18 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+type EtcdPasswordAuth struct {
+	Username string
+	Password string
+}
+
 type EtcdClientAuthConfig struct {
-	CaCert     string `yaml:"ca_cert"`
-	ClientCert string `yaml:"client_cert"`
-	ClientKey  string `yaml:"client_key"`
-	Username   string
-	Password   string
+	CaCert       string `yaml:"ca_cert"`
+	ClientCert   string `yaml:"client_cert"`
+	ClientKey    string `yaml:"client_key"`
+	PasswordAuth string `yaml:"password_auth"`
+	Username     string `yaml:"-"`
+	Password     string `yaml:"-"`
 }
 
 type EtcdClientConfig struct {
@@ -59,6 +65,22 @@ func (c *Config) GetLogLevel() int64 {
 	}
 }
 
+func GetPasswordAuth(path string) (EtcdPasswordAuth, error) {
+	var a EtcdPasswordAuth
+
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return a, errors.New(fmt.Sprintf("Error reading the password auth file: %s", err.Error()))
+	}
+
+	err = yaml.Unmarshal(b, &a)
+	if err != nil {
+		return a, errors.New(fmt.Sprintf("Error parsing the password auth file: %s", err.Error()))
+	}
+
+	return a, nil
+}
+
 func GetConfig(path string) (Config, error) {
 	var c Config
 
@@ -78,6 +100,15 @@ func GetConfig(path string) (Config, error) {
 
 	if c.VersionFallback != "etcd" && c.VersionFallback != "time" && c.VersionFallback != "none" {
 		return c, errors.New(fmt.Sprintf("Error in the configuration: Version fallback must be one of 'etcd', 'time' or 'none'"))
+	}
+
+	if c.EtcdClient.Auth.PasswordAuth != "" {
+		pAuth, pAuthErr := GetPasswordAuth(c.EtcdClient.Auth.PasswordAuth)
+		if pAuthErr != nil {
+			return c, pAuthErr
+		}
+		c.EtcdClient.Auth.Username = pAuth.Username
+		c.EtcdClient.Auth.Password = pAuth.Password
 	}
 
 	return c, nil

@@ -25,8 +25,7 @@ etcd_client:
     ca_cert: Path to a CA certificate that will authentify the etcd servers certificates
     client_cert: Path to a client certificate that the control plane will use to authentify against etcd if client certificate authentication is used
     client_key: Path to a client key that the control plane will use to authentify against etcd if client certificate authentication is used
-    username: Username that the control plane will use to authentify against etcd if client password authentication is used
-    password: Password that the control plane will use to authentify against etcd if client password authentication is used
+    password_auth: Path to a file in yaml format containing the username/password authentication credentials that the control plane will use to authentify to etcd if username/password authentication is used. The file should contain the following two keys: username, password
 server:
   port: Port that the control plane will listen on for envoy server grpc requests
   bind_ip: Ip that the control plane will bind on for envoy server grpc requests
