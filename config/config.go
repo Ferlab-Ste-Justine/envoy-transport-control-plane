@@ -39,9 +39,10 @@ type ServerConfig struct {
 }
 
 type Config struct {
-	EtcdClient EtcdClientConfig `yaml:"etcd_client"`
-	Server     ServerConfig
-	LogLevel   string           `yaml:"log_level"`
+	EtcdClient      EtcdClientConfig `yaml:"etcd_client"`
+	Server          ServerConfig
+	LogLevel        string           `yaml:"log_level"`
+	VersionFallback string           `yaml:"version_fallback"`
 }
 
 func (c *Config) GetLogLevel() int64 {
@@ -69,6 +70,14 @@ func GetConfig(path string) (Config, error) {
 	err = yaml.Unmarshal(b, &c)
 	if err != nil {
 		return c, errors.New(fmt.Sprintf("Error parsing the configuration file: %s", err.Error()))
+	}
+
+	if c.VersionFallback == "" {
+		c.VersionFallback = "etcd"
+	}
+
+	if c.VersionFallback != "etcd" && c.VersionFallback != "time" && c.VersionFallback != "none" {
+		return c, errors.New(fmt.Sprintf("Error in the configuration: Version fallback must be one of 'etcd', 'time' or 'none'"))
 	}
 
 	return c, nil

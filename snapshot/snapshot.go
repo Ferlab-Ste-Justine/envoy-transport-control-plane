@@ -214,7 +214,7 @@ func GetSnapshot(params parameters.Parameters) (*cache.Snapshot, error) {
 	}
 
 	snap, snErr := cache.NewSnapshot(
-		fmt.Sprintf("%d", time.Now().UnixNano()), 
+		params.Version, 
 		resources,
 	)
 	return snap, snErr

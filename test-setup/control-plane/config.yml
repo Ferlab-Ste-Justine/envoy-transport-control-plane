@@ -17,3 +17,4 @@ server:
   keep_alive_timeout: "5s"
   keep_alive_min_time: "30s"
 log_level: info
+version_fallback: etcd

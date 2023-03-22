@@ -3,7 +3,7 @@ module ferlab/envoy-transport-control-plane
 go 1.18
 
 require (
-	github.com/Ferlab-Ste-Justine/etcd-sdk v0.2.1
+	github.com/Ferlab-Ste-Justine/etcd-sdk v0.3.0
 	github.com/envoyproxy/go-control-plane v0.11.0
 	google.golang.org/grpc v1.52.0
 	google.golang.org/protobuf v1.30.0

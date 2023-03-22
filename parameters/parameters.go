@@ -1,6 +1,8 @@
 package parameters
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -36,6 +38,7 @@ type ExposedService struct {
 }
 
 type Parameters struct {
+	Version    string
 	DnsServers []DnsServer      `yaml:"dns_servers"`
     Services   []ExposedService
 }
@@ -52,15 +55,35 @@ type NodeParametersRetrieval struct {
 }
 
 type Retriever struct {
-	Logger logger.Logger
-	Client *client.EtcdClient
+	Logger          logger.Logger
+	VersionFallback string
+	Client          *client.EtcdClient
+}
+
+func (r *Retriever) setParamsVersion(params *Parameters, etcdRev int64) error {
+	if params.Version != "" {
+		return nil
+	} 
+	
+	if r.VersionFallback == "none" {
+		return errors.New("Read parameters without a version and there is no version fallback strategy")
+	}
+	
+	if r.VersionFallback == "etcd" {
+		params.Version = fmt.Sprintf("%d", etcdRev)
+	}
+	
+	if r.VersionFallback == "time" {
+		params.Version = fmt.Sprintf("%d", time.Now().UnixNano())
+	}
+
+	return nil
 }
 
 func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64, error) {
 	result := []NodeParameters{}
 	
 	info, revision, err := r.Client.GetPrefix(prefix)
-	fmt.Println(revision)
 	if err != nil {
 		return result, revision, err
 	}
@@ -74,6 +97,11 @@ func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64,
 			return result, revision, err
 		}
 		
+		err = r.setParamsVersion(&params, val.ModRevision)
+		if err != nil {
+			return result, revision, err
+		}
+
 		r.Logger.Infof("[Etcd] Adding snapshot for node %s on boot", nodeId)
 		result = append(result, NodeParameters{
 			NodeId: nodeId,
@@ -85,8 +113,8 @@ func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64,
 	return result, revision, nil
 }
 
-func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retrievalChan chan<- NodeParametersRetrieval) {
-	changesChan := r.Client.WatchPrefixChanges(prefix, revision)
+func (r *Retriever) watchPrefixNodeParams(ctx context.Context, prefix string, revision int64, retrievalChan chan<- NodeParametersRetrieval) {
+	changesChan := r.Client.WatchPrefixChanges(ctx, prefix, revision, true)
 
 	for change := range changesChan {
 		if change.Error != nil {
@@ -108,7 +136,13 @@ func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retriev
 			nodeId := strings.TrimPrefix(key, prefix)
 
 			var params Parameters
-			err := yaml.Unmarshal([]byte(val), &params)
+			err := yaml.Unmarshal([]byte(val.Value), &params)
+			if err != nil {
+				retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: err}
+				return
+			}
+
+			err = r.setParamsVersion(&params, val.ModRevision)
 			if err != nil {
 				retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: err}
 				return
@@ -124,8 +158,9 @@ func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retriev
 	}
 }
 
-func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (chan NodeParametersRetrieval) {
+func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (chan NodeParametersRetrieval, context.CancelFunc) {
 	paramsChan := make(chan NodeParametersRetrieval)
+	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		defer close(paramsChan)
@@ -157,8 +192,8 @@ func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (c
 			paramsChan <- NodeParametersRetrieval{NodeParameters: nodeParams, Error: nil}
 		}
 
-		r.watchPrefixNodeParams(conf.EtcdClient.Prefix, revision + 1, paramsChan)
+		r.watchPrefixNodeParams(ctx, conf.EtcdClient.Prefix, revision + 1, paramsChan)
 	}()
 
-	return paramsChan
+	return paramsChan, cancel
 }

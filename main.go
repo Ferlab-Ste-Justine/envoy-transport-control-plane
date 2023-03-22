@@ -16,18 +16,22 @@ func main() {
 
 	log.LogLevel = conf.GetLogLevel()
 
-	paramsRetriever := parameters.Retriever{Logger: log}
+	paramsRetriever := parameters.Retriever{Logger: log, VersionFallback: conf.VersionFallback}
+	paramsChan, paramsCancel := paramsRetriever.RetrieveParameters(conf, log)
+
 	ca, caErrChan := server.SetCache(
-		paramsRetriever.RetrieveParameters(conf, log), 
+		paramsChan, 
 		log,
 	)
 	serveCancel, serveErrChan := server.Serve(ca, conf, log)
 
 	select {
 	case caErr := <- caErrChan:
+		paramsCancel()
 		serveCancel()
 		utils.AbortOnErr(caErr, log)
 	case serverErr := <- serveErrChan:
+		paramsCancel()
 		serveCancel()
 		utils.AbortOnErr(serverErr, log)
 	}
