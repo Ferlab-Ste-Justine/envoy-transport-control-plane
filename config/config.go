@@ -41,8 +41,8 @@ type ServerConfig struct {
 type Config struct {
 	EtcdClient      EtcdClientConfig `yaml:"etcd_client"`
 	Server          ServerConfig
-	LogLevel        string `yaml:"log_level"`
-	VersionFallback string `yaml:"version_fallback"`
+	LogLevel        string           `yaml:"log_level"`
+	VersionFallback string           `yaml:"version_fallback"`
 }
 
 func (c *Config) GetLogLevel() int64 {
