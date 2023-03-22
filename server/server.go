@@ -81,6 +81,7 @@ func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (cont
 	errChan := make(chan error)
 
 	go func() {
+		defer close(errChan)
 		srv := server.NewServer(ctx, *ca, &callbacks.Callbacks{Logger: log})
 	
 		var grpcOptions []grpc.ServerOption
@@ -100,19 +101,18 @@ func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (cont
 		lis, lisErr := net.Listen("tcp", fmt.Sprintf("%s:%d", conf.Server.BindIp, conf.Server.Port))
 		if lisErr != nil {
 			errChan <- lisErr
-			close(errChan)
 			return
 		}
 	
 		clusterservice.RegisterClusterDiscoveryServiceServer(gsrv, srv)
 		listenerservice.RegisterListenerDiscoveryServiceServer(gsrv, srv)
 
-		log.Infof("[server] Listening on %s:%d\n", conf.Server.BindIp, conf.Server.Port)
+		log.Infof("[server] Listening on %s:%d", conf.Server.BindIp, conf.Server.Port)
 		srvErr := gsrv.Serve(lis)
 		if srvErr != nil {
 			errChan <- srvErr
 		}
-		close(errChan)
+		log.Infof("[server] Server stopped")
 	}()
 
 	return cancel, errChan

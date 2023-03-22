@@ -116,6 +116,7 @@ func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64,
 func (r *Retriever) watchPrefixNodeParams(ctx context.Context, prefix string, revision int64, retrievalChan chan<- NodeParametersRetrieval) {
 	changesChan := r.Client.WatchPrefixChanges(ctx, prefix, revision, true)
 
+	r.Logger.Infof("[Etcd] Started watching for parameters updates")
 	for change := range changesChan {
 		if change.Error != nil {
 			retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: change.Error}
@@ -156,6 +157,7 @@ func (r *Retriever) watchPrefixNodeParams(ctx context.Context, prefix string, re
 			}, Error: nil}
 		}
 	}
+	r.Logger.Infof("[Etcd] Watching for parameters updates stopped")
 }
 
 func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (chan NodeParametersRetrieval, context.CancelFunc) {
