@@ -10,7 +10,7 @@ import (
 )
 
 type Callbacks struct {
-	Logger         logger.Logger
+	Logger logger.Logger
 }
 
 func (cb *Callbacks) OnStreamOpen(_ context.Context, streamID int64, typeURL string) error {

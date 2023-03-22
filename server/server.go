@@ -11,10 +11,10 @@ import (
 	"ferlab/envoy-transport-control-plane/parameters"
 	"ferlab/envoy-transport-control-plane/snapshot"
 
-	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	clusterservice "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
 	listenerservice "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -23,7 +23,7 @@ import (
 func SetCache(paramsChan <-chan parameters.NodeParametersRetrieval, log logger.Logger) (*cache.SnapshotCache, <-chan error) {
 	ca := cache.NewSnapshotCache(true, cache.IDHash{}, log)
 	errChan := make(chan error)
-	
+
 	go func() {
 		defer close(errChan)
 
@@ -38,7 +38,7 @@ func SetCache(paramsChan <-chan parameters.NodeParametersRetrieval, log logger.L
 					errChan <- ssErr
 					return
 				}
-			
+
 				consErr := snap.Consistent()
 				if consErr != nil {
 					errChan <- consErr
@@ -52,9 +52,9 @@ func SetCache(paramsChan <-chan parameters.NodeParametersRetrieval, log logger.L
 				}
 			} else {
 				ca.ClearSnapshot(params.NodeParameters.NodeId)
-			}		
+			}
 		}
-		
+
 	}()
 
 	return &ca, errChan
@@ -82,7 +82,7 @@ func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (Canc
 	errChan := make(chan error)
 
 	srv := server.NewServer(context.Background(), *ca, &callbacks.Callbacks{Logger: log})
-	
+
 	var grpcOptions []grpc.ServerOption
 	grpcOptions = append(grpcOptions,
 		grpc.MaxConcurrentStreams(conf.Server.MaxConnections),
@@ -108,7 +108,7 @@ func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (Canc
 			errChan <- lisErr
 			return
 		}
-	
+
 		clusterservice.RegisterClusterDiscoveryServiceServer(gsrv, srv)
 		listenerservice.RegisterListenerDiscoveryServiceServer(gsrv, srv)
 

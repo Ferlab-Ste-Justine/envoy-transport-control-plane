@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"time"
 	"strings"
+	"time"
 
 	"ferlab/envoy-transport-control-plane/logger"
 
@@ -13,17 +13,17 @@ import (
 )
 
 type EtcdClientAuthConfig struct {
-	CaCert            string         `yaml:"ca_cert"`
-	ClientCert        string         `yaml:"client_cert"`
-	ClientKey         string         `yaml:"client_key"`
-	Username          string
-	Password          string
+	CaCert     string `yaml:"ca_cert"`
+	ClientCert string `yaml:"client_cert"`
+	ClientKey  string `yaml:"client_key"`
+	Username   string
+	Password   string
 }
 
 type EtcdClientConfig struct {
 	Prefix            string
 	Endpoints         []string
-	ConnectionTimeout time.Duration	`yaml:"connection_timeout"`
+	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
 	RequestTimeout    time.Duration `yaml:"request_timeout"`
 	Retries           uint64
 	Auth              EtcdClientAuthConfig
@@ -41,22 +41,22 @@ type ServerConfig struct {
 type Config struct {
 	EtcdClient      EtcdClientConfig `yaml:"etcd_client"`
 	Server          ServerConfig
-	LogLevel        string           `yaml:"log_level"`
-	VersionFallback string           `yaml:"version_fallback"`
+	LogLevel        string `yaml:"log_level"`
+	VersionFallback string `yaml:"version_fallback"`
 }
 
 func (c *Config) GetLogLevel() int64 {
 	logLevel := strings.ToLower(c.LogLevel)
-    switch logLevel {
-    case "error":
-        return logger.ERROR
-    case "warning":
-        return logger.WARN
-    case "debug":
-        return logger.DEBUG
+	switch logLevel {
+	case "error":
+		return logger.ERROR
+	case "warning":
+		return logger.WARN
+	case "debug":
+		return logger.DEBUG
 	default:
 		return logger.INFO
-    }
+	}
 }
 
 func GetConfig(path string) (Config, error) {

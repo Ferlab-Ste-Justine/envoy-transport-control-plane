@@ -14,7 +14,7 @@ import (
 
 func main() {
 	log := logger.Logger{LogLevel: logger.ERROR}
-	
+
 	conf, confErr := config.GetConfig("config.yml")
 	utils.AbortOnErr(confErr, log)
 
@@ -24,7 +24,7 @@ func main() {
 	paramsChan, paramsCancel := paramsRetriever.RetrieveParameters(conf, log)
 
 	ca, caErrChan := server.SetCache(
-		paramsChan, 
+		paramsChan,
 		log,
 	)
 	serveCancel, serveErrChan := server.Serve(ca, conf, log)
@@ -39,13 +39,13 @@ func main() {
 	}()
 
 	select {
-	case caErr := <- caErrChan:
+	case caErr := <-caErrChan:
 		paramsCancel()
 		serveCancel()
 		<-serveErrChan
 		<-paramsChan
 		utils.AbortOnErr(caErr, log)
-	case serverErr := <- serveErrChan:
+	case serverErr := <-serveErrChan:
 		paramsCancel()
 		serveCancel()
 		<-paramsChan

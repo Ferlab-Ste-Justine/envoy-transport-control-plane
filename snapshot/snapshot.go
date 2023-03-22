@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"time"
 
+	accesslog "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
 	core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
-	accesslog "github.com/envoyproxy/go-control-plane/envoy/config/accesslog/v3"
 	stream "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/stream/v3"
-	tcpproxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	connlimit "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/connection_limit/v3"
+	tcpproxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -38,20 +38,20 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 		})
 	}
 	dnsResolverConfig, err := anypb.New(&cares.CaresDnsResolverConfig{
-		Resolvers: dnsResolvers,
+		Resolvers:              dnsResolvers,
 		UseResolversAsFallback: false,
 	})
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &cluster.Cluster{
 		Name: service.Name,
 		ClusterDiscoveryType: &cluster.Cluster_Type{
 			Type: cluster.Cluster_STRICT_DNS,
 		},
 		TypedDnsResolverConfig: &core.TypedExtensionConfig{
-			Name: "envoy.typed_dns_resolver_config",
+			Name:        "envoy.typed_dns_resolver_config",
 			TypedConfig: dnsResolverConfig,
 		},
 		LbPolicy: cluster.Cluster_ROUND_ROBIN,
@@ -59,15 +59,15 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 			&core.HealthCheck{
 				Timeout: &durationpb.Duration{
 					Seconds: service.HealthCheck.Timeout.Nanoseconds() / 1000000000,
-					Nanos: int32(service.HealthCheck.Timeout.Nanoseconds() - service.HealthCheck.Timeout.Round(time.Second).Nanoseconds()),
+					Nanos:   int32(service.HealthCheck.Timeout.Nanoseconds() - service.HealthCheck.Timeout.Round(time.Second).Nanoseconds()),
 				},
 				Interval: &durationpb.Duration{
 					Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
-					Nanos: int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
+					Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
 				},
-				HealthyThreshold: &wrapperspb.UInt32Value{Value: service.HealthCheck.HealthyThreshold},
+				HealthyThreshold:   &wrapperspb.UInt32Value{Value: service.HealthCheck.HealthyThreshold},
 				UnhealthyThreshold: &wrapperspb.UInt32Value{Value: service.HealthCheck.UnhealthyThreshold},
-				ReuseConnection: &wrapperspb.BoolValue{Value: false},
+				ReuseConnection:    &wrapperspb.BoolValue{Value: false},
 				HealthChecker: &core.HealthCheck_TcpHealthCheck_{
 					TcpHealthCheck: &core.HealthCheck_TcpHealthCheck{},
 				},
@@ -76,11 +76,11 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 		CircuitBreakers: &cluster.CircuitBreakers{
 			Thresholds: []*cluster.CircuitBreakers_Thresholds{
 				&cluster.CircuitBreakers_Thresholds{
-					Priority: core.RoutingPriority_DEFAULT,
-					MaxConnections: &wrapperspb.UInt32Value{Value: uint32(service.MaxConnections)},
+					Priority:           core.RoutingPriority_DEFAULT,
+					MaxConnections:     &wrapperspb.UInt32Value{Value: uint32(service.MaxConnections)},
 					MaxPendingRequests: &wrapperspb.UInt32Value{Value: uint32(service.MaxConnections)},
-					MaxRequests: &wrapperspb.UInt32Value{Value: uint32(service.MaxConnections)},
-					MaxRetries: &wrapperspb.UInt32Value{Value: 3},
+					MaxRequests:        &wrapperspb.UInt32Value{Value: uint32(service.MaxConnections)},
+					MaxRetries:         &wrapperspb.UInt32Value{Value: 3},
 				},
 			},
 		},
@@ -115,7 +115,7 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 
 func getListener(service parameters.ExposedService, dnsServers []parameters.DnsServer) (*listener.Listener, error) {
 	connLimit, err := anypb.New(&connlimit.ConnectionLimit{
-		StatPrefix: fmt.Sprintf("%s_listener_connection_limit", service.Name),
+		StatPrefix:     fmt.Sprintf("%s_listener_connection_limit", service.Name),
 		MaxConnections: &wrapperspb.UInt64Value{Value: service.MaxConnections},
 	})
 	if err != nil {
@@ -140,11 +140,11 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 	}
 
 	tcpProxy, err := anypb.New(&tcpproxy.TcpProxy{
-		StatPrefix: fmt.Sprintf("%s_listener_tcp_proxy", service.Name),
+		StatPrefix:       fmt.Sprintf("%s_listener_tcp_proxy", service.Name),
 		ClusterSpecifier: &tcpproxy.TcpProxy_Cluster{service.Name},
 		IdleTimeout: &durationpb.Duration{
 			Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
-			Nanos: int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
+			Nanos:   int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
 		},
 		AccessLog: []*accesslog.AccessLog{
 			&accesslog.AccessLog{
@@ -158,14 +158,14 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &listener.Listener{
 		Name: service.Name,
 		Address: &core.Address{
 			Address: &core.Address_SocketAddress{
 				SocketAddress: &core.SocketAddress{
 					Protocol: core.SocketAddress_TCP,
-					Address: service.ListeningIp,
+					Address:  service.ListeningIp,
 					PortSpecifier: &core.SocketAddress_PortValue{
 						PortValue: service.ListeningPort,
 					},
@@ -186,14 +186,14 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 						TypedConfig: tcpProxy,
 					},
 				},
-		    },
+			},
 		}},
 	}, nil
 }
 
 func GetSnapshot(params parameters.Parameters) (*cache.Snapshot, error) {
 	resources := map[resource.Type][]types.Resource{
-		resource.ClusterType: []types.Resource{},
+		resource.ClusterType:  []types.Resource{},
 		resource.ListenerType: []types.Resource{},
 	}
 
@@ -219,7 +219,7 @@ func GetSnapshot(params parameters.Parameters) (*cache.Snapshot, error) {
 	}
 
 	snap, snErr := cache.NewSnapshot(
-		params.Version, 
+		params.Version,
 		resources,
 	)
 	return snap, snErr
