@@ -60,17 +60,17 @@ dns_servers:
 services:
   - name: Unique name of the first service
     listening_port: Port that envoy should listen on for the first service
-	listening_ip: Ip that envoy should bind on for the first service
-    cluster_domain: Domain that envoy should use to discover upstream servers for the first service that it should forward requests to
-	cluster_port: Port that envoy should forward requests to on the upstream servers for the first service
-	idle_timeout: How long envoy should wait before closing a connection that has not traffic on the first service. Should be in goland duration format.
-	max_connections: Maximum number of concurrent connections that envoy should accept for the first service
-	healthCheck:
+    listening_ip: Ip that envoy should bind on for the first service
+    cluster_domain: Domain that envoy should use to discover upstream servers   for the first service that it should forward requests to
+    cluster_port: Port that envoy should forward requests to on the upstream servers for the first service
+    idle_timeout: How long envoy should wait before closing a connection that has not traffic on the first service. Should be in goland duration format.
+    max_connections: Maximum number of concurrent connections that envoy should accept for the first service
+    healthCheck:
       timeout: Timeout on health checks on the first service endpoints
       interval: Interval of health checks on each of the first service endpoints
       healthy_threshold: Number of health checks that should pass on an unhealthy endpoing of the first service before it is deemed health
       unhealthy_threshold: Number of health checks that should failed on an healthy endpoint of the first service before it is deemed unhealthy
-	access_log_format: Format for the access logs of the first service. See: https://www.envoyproxy.io/docs/envoy/v1.25.2/configuration/observability/access_log/usage#config-access-log-format-strings
+    access_log_format: Format for the access logs of the first service. See: https://www.envoyproxy.io/docs/envoy/v1.25.2/configuration/observability/access_log/usage#config-access-log-format-strings
   ...
 ```
 
