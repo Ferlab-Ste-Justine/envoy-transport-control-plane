@@ -5,3 +5,4 @@ test-setup/*/terraform.tfstate
 test-setup/*/terraform.tfstate.backup
 test-setup/*/*.crt
 test-setup/*/*.key
+test-setup/upstream-server/upstream-server
