@@ -1,6 +1,10 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"ferlab/envoy-transport-control-plane/config"
 	"ferlab/envoy-transport-control-plane/logger"
 	"ferlab/envoy-transport-control-plane/parameters"
@@ -25,14 +29,26 @@ func main() {
 	)
 	serveCancel, serveErrChan := server.Serve(ca, conf, log)
 
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		sig := <-sigChan
+		log.Warnf("[main] Caught signal %s. Terminating.", sig.String())
+		paramsCancel()
+		serveCancel()
+	}()
+
 	select {
 	case caErr := <- caErrChan:
 		paramsCancel()
 		serveCancel()
+		<-serveErrChan
+		<-paramsChan
 		utils.AbortOnErr(caErr, log)
 	case serverErr := <- serveErrChan:
 		paramsCancel()
 		serveCancel()
+		<-paramsChan
 		utils.AbortOnErr(serverErr, log)
 	}
 }

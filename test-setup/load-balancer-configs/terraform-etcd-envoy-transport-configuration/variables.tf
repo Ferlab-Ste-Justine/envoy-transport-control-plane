@@ -17,7 +17,7 @@ variable "load_balancer" {
       listening_port    = number
       cluster_domain    = string
       cluster_port      = number
-	  idle_timeout      = string
+      idle_timeout      = string
       max_connections   = number
       access_log_format = string
       health_check      = object({

@@ -61,7 +61,7 @@ type Retriever struct {
 	Client          *client.EtcdClient
 }
 
-func (r *Retriever) setParamsVersion(params *Parameters, etcdRev int64) error {
+func (r *Retriever) setParamsVersion(params *Parameters, etcdVer int64) error {
 	if params.Version != "" {
 		return nil
 	} 
@@ -71,7 +71,7 @@ func (r *Retriever) setParamsVersion(params *Parameters, etcdRev int64) error {
 	}
 	
 	if r.VersionFallback == "etcd" {
-		params.Version = fmt.Sprintf("%d", etcdRev)
+		params.Version = fmt.Sprintf("%d", etcdVer)
 	}
 	
 	if r.VersionFallback == "time" {
@@ -98,7 +98,7 @@ func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64,
 			return result, revision, err
 		}
 		
-		err = r.setParamsVersion(&params, val.ModRevision)
+		err = r.setParamsVersion(&params, val.Version)
 		if err != nil {
 			return result, revision, err
 		}
@@ -144,7 +144,7 @@ func (r *Retriever) watchPrefixNodeParams(ctx context.Context, prefix string, re
 				return
 			}
 
-			err = r.setParamsVersion(&params, val.ModRevision)
+			err = r.setParamsVersion(&params, val.Version)
 			if err != nil {
 				retrievalChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: err}
 				return

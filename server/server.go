@@ -76,28 +76,33 @@ func GetGrpcServer(conf config.Config) *grpc.Server {
 	return grpc.NewServer(grpcOptions...)
 }
 
-func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (context.CancelFunc, chan error) {
-	ctx, cancel := context.WithCancel(context.Background())
+type CancelServe func()
+
+func Serve(ca *cache.SnapshotCache, conf config.Config, log logger.Logger) (CancelServe, chan error) {
 	errChan := make(chan error)
+
+	srv := server.NewServer(context.Background(), *ca, &callbacks.Callbacks{Logger: log})
+	
+	var grpcOptions []grpc.ServerOption
+	grpcOptions = append(grpcOptions,
+		grpc.MaxConcurrentStreams(conf.Server.MaxConnections),
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			Time:    conf.Server.KeepAliveTime,
+			Timeout: conf.Server.KeepAliveTimeout,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             conf.Server.KeepAliveMinTime,
+			PermitWithoutStream: true,
+		}),
+	)
+	gsrv := grpc.NewServer(grpcOptions...)
+	cancel := func() {
+		gsrv.Stop()
+	}
 
 	go func() {
 		defer close(errChan)
-		srv := server.NewServer(ctx, *ca, &callbacks.Callbacks{Logger: log})
-	
-		var grpcOptions []grpc.ServerOption
-		grpcOptions = append(grpcOptions,
-			grpc.MaxConcurrentStreams(conf.Server.MaxConnections),
-			grpc.KeepaliveParams(keepalive.ServerParameters{
-				Time:    conf.Server.KeepAliveTime,
-				Timeout: conf.Server.KeepAliveTimeout,
-			}),
-			grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-				MinTime:             conf.Server.KeepAliveMinTime,
-				PermitWithoutStream: true,
-			}),
-		)
-		gsrv := grpc.NewServer(grpcOptions...)
-		
+
 		lis, lisErr := net.Listen("tcp", fmt.Sprintf("%s:%d", conf.Server.BindIp, conf.Server.Port))
 		if lisErr != nil {
 			errChan <- lisErr
