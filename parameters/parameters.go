@@ -81,10 +81,10 @@ func (r *Retriever) setParamsVersion(params *Parameters, etcdVer int64) error {
 	return nil
 }
 
-func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64, error) {
+func (r *Retriever) getPrefixNodeParams(ctx context.Context, prefix string) ([]NodeParameters, int64, error) {
 	result := []NodeParameters{}
 
-	info, revision, err := r.Client.GetPrefix(prefix)
+	info, revision, err := r.Client.GetPrefix(ctx, prefix)
 	if err != nil {
 		return result, revision, err
 	}
@@ -167,7 +167,7 @@ func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (c
 
 	go func() {
 		defer close(paramsChan)
-		cli, cliErr := client.Connect(client.EtcdClientOptions{
+		cli, cliErr := client.Connect(ctx, client.EtcdClientOptions{
 			ClientCertPath:    conf.EtcdClient.Auth.ClientCert,
 			ClientKeyPath:     conf.EtcdClient.Auth.ClientKey,
 			CaCertPath:        conf.EtcdClient.Auth.CaCert,
@@ -185,7 +185,7 @@ func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (c
 
 		r.Client = cli
 
-		nodesParams, revision, nodeParamsErr := r.getPrefixNodeParams(conf.EtcdClient.Prefix)
+		nodesParams, revision, nodeParamsErr := r.getPrefixNodeParams(ctx, conf.EtcdClient.Prefix)
 		if nodeParamsErr != nil {
 			paramsChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: nodeParamsErr}
 			return
