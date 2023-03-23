@@ -1,0 +1,20 @@
+name: Publish Image Using Semver Tag
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    name: Publish Image
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Publish Envoy Transport Control Plane Image
+      uses: Ferlab-Ste-Justine/action-push-image@v2
+      with:
+        username: ${{ secrets.FERLAB_DOCKER_HUB_USER }}
+        password: ${{ secrets.FERLAB_DOCKER_HUB_TOKEN }}
+        image: ferlabcrsj/envoy-transport-control-plane
+        tag_format: "{semver}"
