@@ -18,10 +18,10 @@ module "envoy_one_configs" {
         max_connections   = 100
         access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check      = {
-          timeout             = "10s"
-          interval            = "30s"
+          timeout             = "5s"
+          interval            = "5s"
           healthy_threshold   = 1
-          unhealthy_threshold = 3
+          unhealthy_threshold = 2
         }
       },
       {
@@ -34,10 +34,10 @@ module "envoy_one_configs" {
         max_connections   = 100
         access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check      = {
-          timeout             = "10s"
-          interval            = "30s"
+          timeout             = "5s"
+          interval            = "5s"
           healthy_threshold   = 1
-          unhealthy_threshold = 3
+          unhealthy_threshold = 2
         }
       },
       {
@@ -50,10 +50,10 @@ module "envoy_one_configs" {
         max_connections   = 100
         access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check      = {
-          timeout             = "10s"
-          interval            = "30s"
+          timeout             = "5s"
+          interval            = "5s"
           healthy_threshold   = 1
-          unhealthy_threshold = 3
+          unhealthy_threshold = 2
         }
       }
     ]
@@ -80,10 +80,10 @@ module "envoy_two_configs" {
         max_connections = 100
         access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check    = {
-          timeout             = "10s"
-          interval            = "30s"
+          timeout             = "5s"
+          interval            = "5s"
           healthy_threshold   = 1
-          unhealthy_threshold = 3
+          unhealthy_threshold = 2
         }
       },
       {
@@ -96,10 +96,10 @@ module "envoy_two_configs" {
         max_connections = 100
         access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check    = {
-          timeout             = "10s"
-          interval            = "30s"
+          timeout             = "5s"
+          interval            = "5s"
           healthy_threshold   = 1
-          unhealthy_threshold = 3
+          unhealthy_threshold = 2
         }
       },
       {
@@ -112,10 +112,10 @@ module "envoy_two_configs" {
         max_connections = 100
         access_log_format = "[%START_TIME%][Connection] %DOWNSTREAM_REMOTE_ADDRESS% to %UPSTREAM_HOST% (cluster %UPSTREAM_CLUSTER%). Error flags: %RESPONSE_FLAGS%\n"
         health_check    = {
-          timeout             = "10s"
-          interval            = "30s"
+          timeout             = "5s"
+          interval            = "5s"
           healthy_threshold   = 1
-          unhealthy_threshold = 3
+          unhealthy_threshold = 2
         }
       }
     ]
