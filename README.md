@@ -119,3 +119,5 @@ And they should also be mapped on the following endpoints via the second envoy p
 ```
 
 You can change the envoy configurations in **load balancer-configs**, run **terraform apply** and watch the envoy proxies automatically adjust to the new configuration through the control plane.
+
+Note that there is an additional upstream server (**upstream-server-2**) that you can start to test health checking adjustments. The second server will bind on **127.0.1.1**. The dns server already answers dns queries with the ips of both upstream servers so you've already been validating the health checking on startup, but it never hurts to validate when the server is up and down.

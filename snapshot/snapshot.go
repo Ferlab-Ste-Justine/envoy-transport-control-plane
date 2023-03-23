@@ -65,11 +65,22 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 					Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
 					Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
 				},
+				NoTrafficInterval: &durationpb.Duration{
+					Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
+					Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
+				},
 				HealthyThreshold:   &wrapperspb.UInt32Value{Value: service.HealthCheck.HealthyThreshold},
 				UnhealthyThreshold: &wrapperspb.UInt32Value{Value: service.HealthCheck.UnhealthyThreshold},
 				ReuseConnection:    &wrapperspb.BoolValue{Value: false},
 				HealthChecker: &core.HealthCheck_TcpHealthCheck_{
-					TcpHealthCheck: &core.HealthCheck_TcpHealthCheck{},
+					TcpHealthCheck: &core.HealthCheck_TcpHealthCheck{
+						Send: &core.HealthCheck_Payload{
+							Payload: &core.HealthCheck_Payload_Text{
+								Text: "0101",
+							},
+						},
+						Receive: []*core.HealthCheck_Payload{},
+					},
 				},
 			},
 		},
