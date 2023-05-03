@@ -22,20 +22,26 @@ type DnsServer struct {
 type HealthCheck struct {
 	Timeout            time.Duration
 	Interval           time.Duration
-	HealthyThreshold   uint32 `yaml:"healthy_threshold"`
-	UnhealthyThreshold uint32 `yaml:"unhealthy_threshold"`
+	HealthyThreshold   uint32        `yaml:"healthy_threshold"`
+	UnhealthyThreshold uint32        `yaml:"unhealthy_threshold"`
+}
+
+type TlsTermination struct {
+	ListenerCertificate string `yaml:"listener_certificate"`
+	ListenerKey         string `yaml:"listener_key"`
 }
 
 type ExposedService struct {
 	Name            string
-	ListeningPort   uint32        `yaml:"listening_port"`
-	ListeningIp     string        `yaml:"listening_ip"`
-	ClusterDomain   string        `yaml:"cluster_domain"`
-	ClusterPort     uint32        `yaml:"cluster_port"`
-	IdleTimeout     time.Duration `yaml:"idle_timeout"`
-	MaxConnections  uint64        `yaml:"max_connections"`
-	HealthCheck     HealthCheck   `yaml:"health_check"`
-	AccessLogFormat string        `yaml:"access_log_format"`
+	ListeningPort   uint32         `yaml:"listening_port"`
+	ListeningIp     string         `yaml:"listening_ip"`
+	ClusterDomain   string         `yaml:"cluster_domain"`
+	ClusterPort     uint32         `yaml:"cluster_port"`
+	IdleTimeout     time.Duration  `yaml:"idle_timeout"`
+	MaxConnections  uint64         `yaml:"max_connections"`
+	HealthCheck     HealthCheck    `yaml:"health_check"`
+	AccessLogFormat string         `yaml:"access_log_format"`
+	TlsTermination  TlsTermination `yaml:"tls_termination"`
 }
 
 type Parameters struct {

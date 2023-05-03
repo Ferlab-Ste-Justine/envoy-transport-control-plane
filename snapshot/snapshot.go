@@ -15,6 +15,7 @@ import (
 	connlimit "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/connection_limit/v3"
 	tcpproxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
+	tls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
@@ -170,6 +171,39 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 		return nil, err
 	}
 
+	var transportSocket *core.TransportSocket
+	if service.TlsTermination.ListenerCertificate != "" {
+		tlsConf, err := anypb.New(&tls.DownstreamTlsContext{
+			RequireClientCertificate: &wrapperspb.BoolValue{Value: false},
+			CommonTlsContext: &tls.CommonTlsContext{
+				TlsCertificates: []*tls.TlsCertificate{
+					&tls.TlsCertificate{
+						CertificateChain: &core.DataSource{
+							Specifier: &core.DataSource_Filename{
+								Filename: service.TlsTermination.ListenerCertificate,
+							},
+						},
+						PrivateKey: &core.DataSource{
+							Specifier: &core.DataSource_Filename{
+								Filename: service.TlsTermination.ListenerKey,
+							},
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		transportSocket = &core.TransportSocket{
+			Name: "envoy.transport_sockets.tls",
+			ConfigType: &core.TransportSocket_TypedConfig{
+				TypedConfig: tlsConf,
+			},
+		}
+	}
+
 	return &listener.Listener{
 		Name: service.Name,
 		Address: &core.Address{
@@ -198,6 +232,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 					},
 				},
 			},
+			TransportSocket: transportSocket,
 		}},
 	}, nil
 }
