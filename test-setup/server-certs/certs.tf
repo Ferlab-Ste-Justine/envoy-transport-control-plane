@@ -14,7 +14,7 @@ resource "tls_cert_request" "envoy" {
     common_name  = "envoy"
     organization = "Ferlab"
   }
-  ip_addresses    = []
+  ip_addresses    = ["127.0.0.1"]
   dns_names       = ["*.test.local"]
 }
 
@@ -33,20 +33,38 @@ resource "tls_locally_signed_cert" "envoy" {
   is_ca_certificate = false
 }
 
-resource "local_file" "envoy_ca" {
+resource "local_file" "envoy_1_ca" {
   content         = module.envoy_ca.certificate
   file_permission = "0600"
-  filename        = "${path.module}/../control-plane/envoy-ca.crt"
+  filename        = "${path.module}/../envoy/envoy-ca.crt"
 }
 
-resource "local_file" "envoy_key" {
+resource "local_file" "envoy_1_key" {
   content         = tls_private_key.envoy.private_key_pem
   file_permission = "0600"
-  filename        = "${path.module}/../control-plane/envoy.key"
+  filename        = "${path.module}/../envoy/envoy.key"
 }
 
-resource "local_file" "envoy_cert" {
+resource "local_file" "envoy_1_cert" {
   content         = tls_locally_signed_cert.envoy.cert_pem
   file_permission = "0600"
-  filename        = "${path.module}/../control-plane/envoy.crt"
+  filename        = "${path.module}/../envoy/envoy.crt"
+}
+
+resource "local_file" "envoy_2_ca" {
+  content         = module.envoy_ca.certificate
+  file_permission = "0600"
+  filename        = "${path.module}/../envoy-2/envoy-ca.crt"
+}
+
+resource "local_file" "envoy_2_key" {
+  content         = tls_private_key.envoy.private_key_pem
+  file_permission = "0600"
+  filename        = "${path.module}/../envoy-2/envoy.key"
+}
+
+resource "local_file" "envoy_2_cert" {
+  content         = tls_locally_signed_cert.envoy.cert_pem
+  file_permission = "0600"
+  filename        = "${path.module}/../envoy-2/envoy.crt"
 }
