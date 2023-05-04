@@ -7,7 +7,6 @@
         reload 5s
     }
     reload 5s
-    loop
     nsid eric
     errors
     log
