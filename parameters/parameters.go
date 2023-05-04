@@ -22,20 +22,26 @@ type DnsServer struct {
 type HealthCheck struct {
 	Timeout            time.Duration
 	Interval           time.Duration
-	HealthyThreshold   uint32 `yaml:"healthy_threshold"`
-	UnhealthyThreshold uint32 `yaml:"unhealthy_threshold"`
+	HealthyThreshold   uint32        `yaml:"healthy_threshold"`
+	UnhealthyThreshold uint32        `yaml:"unhealthy_threshold"`
+}
+
+type TlsTermination struct {
+	ListenerCertificate string `yaml:"listener_certificate"`
+	ListenerKey         string `yaml:"listener_key"`
 }
 
 type ExposedService struct {
 	Name            string
-	ListeningPort   uint32        `yaml:"listening_port"`
-	ListeningIp     string        `yaml:"listening_ip"`
-	ClusterDomain   string        `yaml:"cluster_domain"`
-	ClusterPort     uint32        `yaml:"cluster_port"`
-	IdleTimeout     time.Duration `yaml:"idle_timeout"`
-	MaxConnections  uint64        `yaml:"max_connections"`
-	HealthCheck     HealthCheck   `yaml:"health_check"`
-	AccessLogFormat string        `yaml:"access_log_format"`
+	ListeningPort   uint32         `yaml:"listening_port"`
+	ListeningIp     string         `yaml:"listening_ip"`
+	ClusterDomain   string         `yaml:"cluster_domain"`
+	ClusterPort     uint32         `yaml:"cluster_port"`
+	IdleTimeout     time.Duration  `yaml:"idle_timeout"`
+	MaxConnections  uint64         `yaml:"max_connections"`
+	HealthCheck     HealthCheck    `yaml:"health_check"`
+	AccessLogFormat string         `yaml:"access_log_format"`
+	TlsTermination  TlsTermination `yaml:"tls_termination"`
 }
 
 type Parameters struct {
@@ -81,26 +87,26 @@ func (r *Retriever) setParamsVersion(params *Parameters, etcdVer int64) error {
 	return nil
 }
 
-func (r *Retriever) getPrefixNodeParams(ctx context.Context, prefix string) ([]NodeParameters, int64, error) {
+func (r *Retriever) getPrefixNodeParams(prefix string) ([]NodeParameters, int64, error) {
 	result := []NodeParameters{}
 
-	info, revision, err := r.Client.GetPrefix(ctx, prefix)
+	info, err := r.Client.GetPrefix(prefix)
 	if err != nil {
-		return result, revision, err
+		return result, info.Revision, err
 	}
 
-	for _, val := range info {
+	for _, val := range info.Keys {
 		nodeId := strings.TrimPrefix(val.Key, prefix)
 
 		var params Parameters
 		err = yaml.Unmarshal([]byte(val.Value), &params)
 		if err != nil {
-			return result, revision, err
+			return result, info.Revision, err
 		}
 
 		err = r.setParamsVersion(&params, val.Version)
 		if err != nil {
-			return result, revision, err
+			return result, info.Revision, err
 		}
 
 		r.Logger.Infof("[Etcd] Adding snapshot for node %s on boot", nodeId)
@@ -111,11 +117,15 @@ func (r *Retriever) getPrefixNodeParams(ctx context.Context, prefix string) ([]N
 		})
 	}
 
-	return result, revision, nil
+	return result, info.Revision, nil
 }
 
-func (r *Retriever) watchPrefixNodeParams(ctx context.Context, prefix string, revision int64, retrievalChan chan<- NodeParametersRetrieval) {
-	changesChan := r.Client.WatchPrefixChanges(ctx, prefix, revision, true)
+func (r *Retriever) watchPrefixNodeParams(prefix string, revision int64, retrievalChan chan<- NodeParametersRetrieval) {
+	changesChan := r.Client.Watch(prefix, client.WatchOptions{
+		Revision: revision,
+		IsPrefix: true,
+		TrimPrefix: true,
+	})
 
 	r.Logger.Infof("[Etcd] Started watching for parameters updates")
 	for change := range changesChan {
@@ -185,7 +195,7 @@ func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (c
 
 		r.Client = cli
 
-		nodesParams, revision, nodeParamsErr := r.getPrefixNodeParams(ctx, conf.EtcdClient.Prefix)
+		nodesParams, revision, nodeParamsErr := r.getPrefixNodeParams(conf.EtcdClient.Prefix)
 		if nodeParamsErr != nil {
 			paramsChan <- NodeParametersRetrieval{NodeParameters: NodeParameters{}, Error: nodeParamsErr}
 			return
@@ -195,7 +205,7 @@ func (r *Retriever) RetrieveParameters(conf config.Config, log logger.Logger) (c
 			paramsChan <- NodeParametersRetrieval{NodeParameters: nodeParams, Error: nil}
 		}
 
-		r.watchPrefixNodeParams(ctx, conf.EtcdClient.Prefix, revision+1, paramsChan)
+		r.watchPrefixNodeParams(conf.EtcdClient.Prefix, revision+1, paramsChan)
 	}()
 
 	return paramsChan, cancel
