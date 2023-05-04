@@ -10,7 +10,7 @@ import (
 func server(server string, port int64) {
 	router := gin.Default()
 	router.GET("/", func(c *gin.Context) {
-		fmt.Printf("Host header is %s\n", c.Request.Header.Get("Host"))
+		fmt.Printf("Host is: %s\n", c.Request.Host)
 		c.JSON(http.StatusOK, gin.H{
 			"server": server,
 		})
