@@ -1,5 +1,5 @@
 module "envoy_one_configs" {
-  source = "./terraform-etcd-envoy-transport-configuration"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-etcd-envoy-transport-configuration.git?ref=feature/support-tls-termination"
   etcd_prefix = "/envoy/"
   node_id = "envoy-one"
   load_balancer = {
@@ -23,6 +23,10 @@ module "envoy_one_configs" {
           healthy_threshold   = 1
           unhealthy_threshold = 2
         }
+        tls_termination   = {
+          listener_certificate = ""
+          listener_key         = ""
+        }
       },
       {
         name              = "server2"
@@ -38,6 +42,10 @@ module "envoy_one_configs" {
           interval            = "5s"
           healthy_threshold   = 1
           unhealthy_threshold = 2
+        }
+        tls_termination   = {
+          listener_certificate = ""
+          listener_key         = ""
         }
       },
       {
@@ -55,13 +63,17 @@ module "envoy_one_configs" {
           healthy_threshold   = 1
           unhealthy_threshold = 2
         }
+        tls_termination   = {
+          listener_certificate = ""
+          listener_key         = ""
+        }
       }
     ]
   }
 }
 
 module "envoy_two_configs" {
-  source = "./terraform-etcd-envoy-transport-configuration"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-etcd-envoy-transport-configuration.git?ref=feature/support-tls-termination"
   etcd_prefix = "/envoy/"
   node_id = "envoy-two"
   load_balancer = {
@@ -85,6 +97,10 @@ module "envoy_two_configs" {
           healthy_threshold   = 1
           unhealthy_threshold = 2
         }
+        tls_termination   = {
+          listener_certificate = ""
+          listener_key         = ""
+        }
       },
       {
         name            = "server2"
@@ -101,6 +117,10 @@ module "envoy_two_configs" {
           healthy_threshold   = 1
           unhealthy_threshold = 2
         }
+        tls_termination   = {
+          listener_certificate = ""
+          listener_key         = ""
+        }
       },
       {
         name            = "server3"
@@ -116,6 +136,10 @@ module "envoy_two_configs" {
           interval            = "5s"
           healthy_threshold   = 1
           unhealthy_threshold = 2
+        }
+        tls_termination   = {
+          listener_certificate = ""
+          listener_key         = ""
         }
       }
     ]
