@@ -1,5 +1,5 @@
 module "envoy_one_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-etcd-envoy-transport-configuration.git?ref=feature/support-tls-termination"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-etcd-envoy-transport-configuration.git"
   etcd_prefix = "/envoy/"
   node_id = "envoy-one"
   load_balancer = {
@@ -73,7 +73,7 @@ module "envoy_one_configs" {
 }
 
 module "envoy_two_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-etcd-envoy-transport-configuration.git?ref=feature/support-tls-termination"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-etcd-envoy-transport-configuration.git"
   etcd_prefix = "/envoy/"
   node_id = "envoy-two"
   load_balancer = {
