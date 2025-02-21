@@ -47,14 +47,14 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 	}
 
 	var transportSocket *core.TransportSocket
-	if service.ClusterCaCertificate != "" {
+	if service.TlsTermination.ClusterCaCertificate != "" {
 		tlsConf, err := anypb.New(&tls.UpstreamTlsContext{
 			CommonTlsContext: &tls.CommonTlsContext{
 				ValidationContextType: &tls.CommonTlsContext_ValidationContext{
 					ValidationContext: &tls.CertificateValidationContext{
 						TrustedCa: &core.DataSource{
 							Specifier: &core.DataSource_Filename{
-								Filename: service.ClusterCaCertificate,
+								Filename: service.TlsTermination.ClusterCaCertificate,
 							},
 						},
 					},

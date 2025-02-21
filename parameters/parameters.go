@@ -29,6 +29,7 @@ type HealthCheck struct {
 type TlsTermination struct {
 	ListenerCertificate  string `yaml:"listener_certificate"`
 	ListenerKey          string `yaml:"listener_key"`
+	ClusterCaCertificate string `yaml:"cluster_ca_certificate"`
 }
 
 type ExposedService struct {
@@ -37,7 +38,6 @@ type ExposedService struct {
 	ListeningIp          string         `yaml:"listening_ip"`
 	ClusterDomain        string         `yaml:"cluster_domain"`
 	ClusterPort          uint32         `yaml:"cluster_port"`
-	ClusterCaCertificate string         `yaml:"cluster_ca_certificate"`
 	IdleTimeout          time.Duration  `yaml:"idle_timeout"`
 	MaxConnections       uint64         `yaml:"max_connections"`
 	HealthCheck          HealthCheck    `yaml:"health_check"`
