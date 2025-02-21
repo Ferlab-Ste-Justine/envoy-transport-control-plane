@@ -46,8 +46,36 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 		return nil, err
 	}
 
+	var transportSocket *core.TransportSocket
+	if service.ClusterCaCertificate != "" {
+		tlsConf, err := anypb.New(&tls.UpstreamTlsContext{
+			CommonTlsContext: &tls.CommonTlsContext{
+				ValidationContextType: &tls.CommonTlsContext_ValidationContext{
+					ValidationContext: &tls.CertificateValidationContext{
+						TrustedCa: &core.DataSource{
+							Specifier: &core.DataSource_Filename{
+								Filename: service.ClusterCaCertificate,
+							},
+						},
+					},
+				},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		transportSocket = &core.TransportSocket{
+			Name: "envoy.transport_sockets.tls",
+			ConfigType: &core.TransportSocket_TypedConfig{
+				TypedConfig: tlsConf,
+			},
+		}
+	}
+
 	return &cluster.Cluster{
 		Name: service.Name,
+		TransportSocket: transportSocket,
 		ClusterDiscoveryType: &cluster.Cluster_Type{
 			Type: cluster.Cluster_STRICT_DNS,
 		},
