@@ -27,9 +27,11 @@ type HealthCheck struct {
 }
 
 type TlsTermination struct {
-	ListenerCertificate  string `yaml:"listener_certificate"`
-	ListenerKey          string `yaml:"listener_key"`
-	ClusterCaCertificate string `yaml:"cluster_ca_certificate"`
+	ListenerCertificate      string `yaml:"listener_certificate"`
+	ListenerKey              string `yaml:"listener_key"`
+	ClusterCaCertificate     string `yaml:"cluster_ca_certificate"`
+	ClusterClientCertificate string `yaml:"cluster_client_certificate"`
+	ClusterClientKey         string `yaml:"cluster_client_key"`
 }
 
 type ExposedService struct {
