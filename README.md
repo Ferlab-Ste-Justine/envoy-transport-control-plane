@@ -71,8 +71,11 @@ services:
       unhealthy_threshold: Number of health checks that should failed on an healthy endpoint of the first service before it is deemed unhealthy
     access_log_format: Format for the access logs of the first service. See: https://www.envoyproxy.io/docs/envoy/v1.25.2/configuration/observability/access_log/usage#config-access-log-format-strings
     tls_termination: 
-      listener_certificate: Optional tls field to specify if the service should perform tls termination as opposed to tls passthrough. Note that end-to-end tls is currently only supported if you use tls passthrough. This should be the filesystem path to the tls certificate that the service will present to the client.
+      listener_certificate: Path to a tls certificate to present to clients if the service should perform tls termination as opposed to tls passthrough. 
       listener_key: This field should be specified in combination with "listener_certificate". This should be the filesystem path to the private key that the service will use in combination with the certificate to authentify itself to the client.
+      cluster_ca_certificate: Path to a CA certificate to authentify the backend certificate if the backend expects a tls connection as well.
+      cluster_client_certificate: Path to a client certificate to present to the backend. If the backend doesn't validate client certs, a dummy certificate can be passed here.
+      cluster_client_key: Path to a client key to present to the backend.
   ...
 ```
 
