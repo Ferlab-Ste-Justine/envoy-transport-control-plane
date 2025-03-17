@@ -14,6 +14,8 @@ import (
 	stream "github.com/envoyproxy/go-control-plane/envoy/extensions/access_loggers/stream/v3"
 	connlimit "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/connection_limit/v3"
 	tcpproxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
+	httpconn "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
+	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
 	tls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
@@ -193,26 +195,6 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 		return nil, lErr
 	}
 
-	tcpProxy, err := anypb.New(&tcpproxy.TcpProxy{
-		StatPrefix:       fmt.Sprintf("%s_listener_tcp_proxy", service.Name),
-		ClusterSpecifier: &tcpproxy.TcpProxy_Cluster{service.Name},
-		IdleTimeout: &durationpb.Duration{
-			Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
-			Nanos:   int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
-		},
-		AccessLog: []*accesslog.AccessLog{
-			&accesslog.AccessLog{
-				Name: fmt.Sprintf("%s_listener_tcp_log", service.Name),
-				ConfigType: &accesslog.AccessLog_TypedConfig{
-					TypedConfig: stdoutLogs,
-				},
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	var transportSocket *core.TransportSocket
 	if service.TlsTermination.ListenerCertificate != "" {
 		tlsConf, err := anypb.New(&tls.DownstreamTlsContext{
@@ -246,6 +228,94 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 		}
 	}
 
+	listenerFilters := []*listener.Filter{
+		{
+			Name: "envoy.filters.network.connection_limit",
+			ConfigType: &listener.Filter_TypedConfig{
+				TypedConfig: connLimit,
+			},
+		},
+	}
+
+	if !service.TlsTermination.UseHttpListener {
+		tcpProxy, err := anypb.New(&tcpproxy.TcpProxy{
+			StatPrefix: fmt.Sprintf("%s_listener_tcp_proxy", service.Name),
+			ClusterSpecifier: &tcpproxy.TcpProxy_Cluster{service.Name},
+			IdleTimeout: &durationpb.Duration{
+				Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
+				Nanos:   int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
+			},
+			AccessLog: []*accesslog.AccessLog{
+				&accesslog.AccessLog{
+					Name: fmt.Sprintf("%s_listener_tcp_log", service.Name),
+					ConfigType: &accesslog.AccessLog_TypedConfig{
+						TypedConfig: stdoutLogs,
+					},
+				},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		listenerFilters = append(listenerFilters, &listener.Filter{
+			Name: "envoy.filters.network.tcp_proxy",
+			ConfigType: &listener.Filter_TypedConfig{
+				TypedConfig: tcpProxy,
+			},
+		})
+	} else {
+		httpConnMan, err := anypb.New(&httpconn.HttpConnectionManager{
+			StatPrefix:       fmt.Sprintf("%s_listener_http_connection_manager", service.Name),
+			RouteSpecifier: &httpconn.HttpConnectionManager_RouteConfig{
+				RouteConfig: &route.RouteConfiguration{
+					VirtualHosts: []*route.VirtualHost{
+						&route.VirtualHost{
+							Name: "default",
+							Domains: []string{"*"},
+							Routes: []*route.Route{
+								&route.Route{
+									Match: &route.RouteMatch{
+										PathSpecifier: &route.RouteMatch_Prefix{
+											Prefix: "/",
+										},
+									},
+									Action: &route.Route_Route{
+										Route: &route.RouteAction{
+											ClusterSpecifier: &route.RouteAction_Cluster{service.Name},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			StreamIdleTimeout: &durationpb.Duration{
+				Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
+				Nanos:   int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
+			},
+			AccessLog: []*accesslog.AccessLog{
+				&accesslog.AccessLog{
+					Name: fmt.Sprintf("%s_listener_http_log", service.Name),
+					ConfigType: &accesslog.AccessLog_TypedConfig{
+						TypedConfig: stdoutLogs,
+					},
+				},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		listenerFilters = append(listenerFilters, &listener.Filter{
+			Name: "envoy.filters.network.http_connection_manager",
+			ConfigType: &listener.Filter_TypedConfig{
+				TypedConfig: httpConnMan,
+			},
+		})
+	}
+
 	return &listener.Listener{
 		Name: service.Name,
 		Address: &core.Address{
@@ -260,20 +330,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 		},
 		FilterChains: []*listener.FilterChain{{
-			Filters: []*listener.Filter{
-				{
-					Name: "envoy.filters.network.connection_limit",
-					ConfigType: &listener.Filter_TypedConfig{
-						TypedConfig: connLimit,
-					},
-				},
-				{
-					Name: "envoy.filters.network.tcp_proxy",
-					ConfigType: &listener.Filter_TypedConfig{
-						TypedConfig: tcpProxy,
-					},
-				},
-			},
+			Filters: listenerFilters,
 			TransportSocket: transportSocket,
 		}},
 	}, nil

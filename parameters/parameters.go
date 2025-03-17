@@ -32,6 +32,7 @@ type TlsTermination struct {
 	ClusterCaCertificate     string `yaml:"cluster_ca_certificate"`
 	ClusterClientCertificate string `yaml:"cluster_client_certificate"`
 	ClusterClientKey         string `yaml:"cluster_client_key"`
+	UseHttpListener          bool   `yaml:"use_http_listener"`
 }
 
 type ExposedService struct {
