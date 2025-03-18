@@ -15,6 +15,7 @@ import (
 	connlimit "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/connection_limit/v3"
 	tcpproxy "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/tcp_proxy/v3"
 	httpconn "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
+	httprouter "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
 	tls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
@@ -197,7 +198,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 
 	var transportSocket *core.TransportSocket
 	if service.TlsTermination.ListenerCertificate != "" {
-		tlsConf, err := anypb.New(&tls.DownstreamTlsContext{
+		downTlsCont := tls.DownstreamTlsContext{
 			RequireClientCertificate: &wrapperspb.BoolValue{Value: false},
 			CommonTlsContext: &tls.CommonTlsContext{
 				TlsCertificates: []*tls.TlsCertificate{
@@ -215,7 +216,13 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 					},
 				},
 			},
-		})
+		}
+
+		if service.TlsTermination.UseHttpListener{
+			downTlsCont.CommonTlsContext.AlpnProtocols = []string{"h2", "http/1.1"}
+		}
+
+		tlsConf, err := anypb.New(&downTlsCont)
 		if err != nil {
 			return nil, err
 		}
@@ -265,8 +272,21 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 		})
 	} else {
+		router, err := anypb.New(&httprouter.Router{})
+		if err != nil {
+			return nil, err
+		}
+
 		httpConnMan, err := anypb.New(&httpconn.HttpConnectionManager{
 			StatPrefix:       fmt.Sprintf("%s_listener_http_connection_manager", service.Name),
+			HttpFilters: []*httpconn.HttpFilter{
+				&httpconn.HttpFilter{
+					Name: "envoy.filters.http.router",
+					ConfigType: &httpconn.HttpFilter_TypedConfig{
+						TypedConfig: router,
+					},
+				},
+			},
 			RouteSpecifier: &httpconn.HttpConnectionManager_RouteConfig{
 				RouteConfig: &route.RouteConfiguration{
 					VirtualHosts: []*route.VirtualHost{
