@@ -277,8 +277,28 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			return nil, err
 		}
 
+		serverName := service.TlsTermination.HttpParameters.ServerName
+		if serverName == "" {
+			serverName = "envoy"
+		}
+
+		maxConcurrentStreams := service.TlsTermination.HttpParameters.MaxConcurrentStreams
+		if maxConcurrentStreams == 0 {
+			maxConcurrentStreams = uint32(2147483647)
+		}
+
 		httpConnMan, err := anypb.New(&httpconn.HttpConnectionManager{
-			StatPrefix:       fmt.Sprintf("%s_listener_http_connection_manager", service.Name),
+			StatPrefix: fmt.Sprintf("%s_listener_http_connection_manager", service.Name),
+			ServerName: serverName,
+			CommonHttpProtocolOptions: &core.HttpProtocolOptions{
+				IdleTimeout: &durationpb.Duration{
+					Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
+					Nanos:   int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
+				},
+			},
+			Http2ProtocolOptions: &core.Http2ProtocolOptions{
+				MaxConcurrentStreams: &wrapperspb.UInt32Value{Value: maxConcurrentStreams},
+			},
 			HttpFilters: []*httpconn.HttpFilter{
 				&httpconn.HttpFilter{
 					Name: "envoy.filters.http.router",

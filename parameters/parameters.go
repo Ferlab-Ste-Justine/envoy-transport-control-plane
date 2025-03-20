@@ -26,13 +26,19 @@ type HealthCheck struct {
 	UnhealthyThreshold uint32        `yaml:"unhealthy_threshold"`
 }
 
+type HttpParameters struct {
+	ServerName           string `yaml:"server_name"`         
+	MaxConcurrentStreams uint32 `yaml:"max_concurrent_streams"`
+}
+
 type TlsTermination struct {
-	ListenerCertificate      string `yaml:"listener_certificate"`
-	ListenerKey              string `yaml:"listener_key"`
-	ClusterCaCertificate     string `yaml:"cluster_ca_certificate"`
-	ClusterClientCertificate string `yaml:"cluster_client_certificate"`
-	ClusterClientKey         string `yaml:"cluster_client_key"`
-	UseHttpListener          bool   `yaml:"use_http_listener"`
+	ListenerCertificate      string         `yaml:"listener_certificate"`
+	ListenerKey              string         `yaml:"listener_key"`
+	ClusterCaCertificate     string         `yaml:"cluster_ca_certificate"`
+	ClusterClientCertificate string         `yaml:"cluster_client_certificate"`
+	ClusterClientKey         string         `yaml:"cluster_client_key"`
+	UseHttpListener          bool           `yaml:"use_http_listener"`
+	HttpParameters           HttpParameters `yaml:"http_parameters"`
 }
 
 type ExposedService struct {

@@ -77,6 +77,9 @@ services:
       cluster_client_certificate: Path to a client certificate to present to the backend. If the backend doesn't validate client certs, a dummy certificate can be passed here.
       cluster_client_key: Path to a client key to present to the backend.
       use_http_listener: Whether to use an L7 http listener instead of L4 tcp as part of the tls termination. Useful to negotiate http version with clients.
+      http_parameters:
+        server_name: Server name to return on http requests if using http listener.
+        max_concurrent_streams: Maximum number of streams to allow per peer for clients using http/2 if using http listener.
   ...
 ```
 
