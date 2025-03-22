@@ -272,19 +272,31 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 		})
 	} else {
+		httpParams := service.TlsTermination.HttpParameters
+
 		router, err := anypb.New(&httprouter.Router{})
 		if err != nil {
 			return nil, err
 		}
 
-		serverName := service.TlsTermination.HttpParameters.ServerName
+		serverName := httpParams.ServerName
 		if serverName == "" {
 			serverName = "envoy"
 		}
 
-		maxConcurrentStreams := service.TlsTermination.HttpParameters.MaxConcurrentStreams
+		maxConcurrentStreams := httpParams.MaxConcurrentStreams
 		if maxConcurrentStreams == 0 {
 			maxConcurrentStreams = uint32(2147483647)
+		}
+
+		initialStreamWindowSize := httpParams.InitialStreamWindowSize
+		if initialStreamWindowSize == 0 {
+			initialStreamWindowSize = uint32(268435456) //256MB
+		}
+
+		initialConnWindowSize := httpParams.InitialConnectionWindowSize
+		if initialConnWindowSize == 0 {
+			initialConnWindowSize = uint32(268435456) //256MB
 		}
 
 		httpConnMan, err := anypb.New(&httpconn.HttpConnectionManager{
@@ -298,6 +310,8 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 			Http2ProtocolOptions: &core.Http2ProtocolOptions{
 				MaxConcurrentStreams: &wrapperspb.UInt32Value{Value: maxConcurrentStreams},
+				InitialStreamWindowSize: &wrapperspb.UInt32Value{Value: initialStreamWindowSize},
+				InitialConnectionWindowSize: &wrapperspb.UInt32Value{Value: initialConnWindowSize},
 			},
 			HttpFilters: []*httpconn.HttpFilter{
 				&httpconn.HttpFilter{
@@ -335,6 +349,11 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 				Seconds: service.IdleTimeout.Nanoseconds() / 1000000000,
 				Nanos:   int32(service.IdleTimeout.Nanoseconds() - service.IdleTimeout.Round(time.Second).Nanoseconds()),
 			},
+			RequestHeadersTimeout: &durationpb.Duration{
+				Seconds: httpParams.RequestHeadersTimeout.Nanoseconds() / 1000000000,
+				Nanos:   int32(httpParams.RequestHeadersTimeout.Nanoseconds() - httpParams.RequestHeadersTimeout.Round(time.Second).Nanoseconds()),
+			},
+			UseRemoteAddress: &wrapperspb.BoolValue{Value: httpParams.UseRemoteAddress},
 			AccessLog: []*accesslog.AccessLog{
 				&accesslog.AccessLog{
 					Name: fmt.Sprintf("%s_listener_http_log", service.Name),

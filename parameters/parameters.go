@@ -27,8 +27,12 @@ type HealthCheck struct {
 }
 
 type HttpParameters struct {
-	ServerName           string `yaml:"server_name"`         
-	MaxConcurrentStreams uint32 `yaml:"max_concurrent_streams"`
+	ServerName                  string        `yaml:"server_name"`         
+	MaxConcurrentStreams        uint32        `yaml:"max_concurrent_streams"`
+	RequestHeadersTimeout       time.Duration `yaml:"request_headers_timeout"`
+	UseRemoteAddress            bool          `yaml:"use_remote_address"`
+	InitialConnectionWindowSize uint32        `yaml:"initial_connection_window_size"`
+	InitialStreamWindowSize     uint32        `yaml:"initial_stream_window_size"`
 }
 
 type TlsTermination struct {
