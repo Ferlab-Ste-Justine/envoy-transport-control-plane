@@ -69,6 +69,12 @@ services:
       interval: Interval of health checks on each of the first service endpoints
       healthy_threshold: Number of health checks that should pass on an unhealthy endpoing of the first service before it is deemed health
       unhealthy_threshold: Number of health checks that should failed on an healthy endpoint of the first service before it is deemed unhealthy
+      http:
+        enabled: Whether to use an http healthcheck instead of a tcp connection check
+        path: Path of the health check http request
+        status_code_range: Range of acceptable status codes
+          First: First accepted status code in the range
+          Last: Last accepted status code in the range
     access_log_format: Format for the access logs of the first service. See: https://www.envoyproxy.io/docs/envoy/v1.25.2/configuration/observability/access_log/usage#config-access-log-format-strings
     tls_termination: 
       listener_certificate: Path to a tls certificate to present to clients if the service should perform tls termination as opposed to tls passthrough. 
@@ -76,8 +82,8 @@ services:
       cluster_ca_certificate: Path to a CA certificate to authentify the backend certificate if the backend expects a tls connection as well.
       cluster_client_certificate: Path to a client certificate to present to the backend. If the backend doesn't validate client certs, a dummy certificate can be passed here.
       cluster_client_key: Path to a client key to present to the backend.
-      use_http_listener: Whether to use an L7 http listener instead of L4 tcp as part of the tls termination. Useful to negotiate http version with clients.
-      http_parameters: Parameters if using https listerner.
+      http_listener: Parameters for using an L7 http listener instead of L4 tcp as part of the tls termination
+        enabled: Set to true to use http listener instead of tcp listener.
         server_name: Server name to return on http requests.
         max_concurrent_streams: Maximum number of streams to allow per peer for clients using http/2.
         request_headers_timeout: The maximum amount of time envoy will wait for all headers to be received once the initial byte is sent.

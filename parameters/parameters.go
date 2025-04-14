@@ -24,25 +24,37 @@ type HealthCheck struct {
 	Interval           time.Duration
 	HealthyThreshold   uint32        `yaml:"healthy_threshold"`
 	UnhealthyThreshold uint32        `yaml:"unhealthy_threshold"`
+	Http               HttpHealthCheck
 }
 
-type HttpParameters struct {
-	ServerName                  string        `yaml:"server_name"`         
-	MaxConcurrentStreams        uint32        `yaml:"max_concurrent_streams"`
-	RequestHeadersTimeout       time.Duration `yaml:"request_headers_timeout"`
-	UseRemoteAddress            bool          `yaml:"use_remote_address"`
-	InitialConnectionWindowSize uint32        `yaml:"initial_connection_window_size"`
-	InitialStreamWindowSize     uint32        `yaml:"initial_stream_window_size"`
+type StatusCodeRange struct {
+	First int64
+	Last int64
+}
+
+type HttpHealthCheck struct {
+	Enabled         bool
+	Path            string
+	StatusCodeRange StatusCodeRange  `yaml:"status_code_range"`
+}
+
+type HttpListener struct {
+	Enabled                     bool
+	ServerName                  string          `yaml:"server_name"`         
+	MaxConcurrentStreams        uint32          `yaml:"max_concurrent_streams"`
+	RequestHeadersTimeout       time.Duration   `yaml:"request_headers_timeout"`
+	UseRemoteAddress            bool            `yaml:"use_remote_address"`
+	InitialConnectionWindowSize uint32          `yaml:"initial_connection_window_size"`
+	InitialStreamWindowSize     uint32          `yaml:"initial_stream_window_size"`
 }
 
 type TlsTermination struct {
-	ListenerCertificate      string         `yaml:"listener_certificate"`
-	ListenerKey              string         `yaml:"listener_key"`
-	ClusterCaCertificate     string         `yaml:"cluster_ca_certificate"`
-	ClusterClientCertificate string         `yaml:"cluster_client_certificate"`
-	ClusterClientKey         string         `yaml:"cluster_client_key"`
-	UseHttpListener          bool           `yaml:"use_http_listener"`
-	HttpParameters           HttpParameters `yaml:"http_parameters"`
+	ListenerCertificate      string       `yaml:"listener_certificate"`
+	ListenerKey              string       `yaml:"listener_key"`
+	ClusterCaCertificate     string       `yaml:"cluster_ca_certificate"`
+	ClusterClientCertificate string       `yaml:"cluster_client_certificate"`
+	ClusterClientKey         string       `yaml:"cluster_client_key"`
+	HttpListener             HttpListener `yaml:"http_listener"`
 }
 
 type ExposedService struct {

@@ -19,6 +19,8 @@ import (
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
 	tls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
+	envoytype "github.com/envoyproxy/go-control-plane/envoy/type/v3"
+	//matcher "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
@@ -60,6 +62,16 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 								Filename: service.TlsTermination.ClusterCaCertificate,
 							},
 						},
+						/*MatchTypedSubjectAltNames: []*tls.SubjectAltNameMatcher{
+							&tls.SubjectAltNameMatcher{
+								SanType: tls.SubjectAltNameMatcher_DNS,
+								Matcher: &matcher.StringMatcher{
+									MatchPattern: &matcher.StringMatcher_Exact{
+										Exact: service.ClusterDomain,
+									},
+								},
+							},
+						},*/
 					},
 				},
 				TlsCertificates: []*tls.TlsCertificate{
@@ -90,6 +102,50 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 		}
 	}
 
+	healthCheck := core.HealthCheck{
+		Timeout: &durationpb.Duration{
+			Seconds: service.HealthCheck.Timeout.Nanoseconds() / 1000000000,
+			Nanos:   int32(service.HealthCheck.Timeout.Nanoseconds() - service.HealthCheck.Timeout.Round(time.Second).Nanoseconds()),
+		},
+		Interval: &durationpb.Duration{
+			Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
+			Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
+		},
+		NoTrafficInterval: &durationpb.Duration{
+			Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
+			Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
+		},
+		HealthyThreshold:   &wrapperspb.UInt32Value{Value: service.HealthCheck.HealthyThreshold},
+		UnhealthyThreshold: &wrapperspb.UInt32Value{Value: service.HealthCheck.UnhealthyThreshold},
+		ReuseConnection:    &wrapperspb.BoolValue{Value: false},
+	}
+
+	if !service.HealthCheck.Http.Enabled {
+		healthCheck.HealthChecker = &core.HealthCheck_TcpHealthCheck_{
+			TcpHealthCheck: &core.HealthCheck_TcpHealthCheck{
+				Send: &core.HealthCheck_Payload{
+					Payload: &core.HealthCheck_Payload_Text{
+						Text: "0101",
+					},
+				},
+				Receive: []*core.HealthCheck_Payload{},
+			},
+		}
+	} else {
+		healthCheck.HealthChecker = &core.HealthCheck_HttpHealthCheck_{
+			HttpHealthCheck: &core.HealthCheck_HttpHealthCheck{
+				Host: service.ClusterDomain,
+				Path: service.HealthCheck.Http.Path,
+				ExpectedStatuses: []*envoytype.Int64Range{
+					&envoytype.Int64Range{
+						Start: service.HealthCheck.Http.StatusCodeRange.First,
+						End: service.HealthCheck.Http.StatusCodeRange.Last + 1,
+					},
+				},
+			},
+		}
+	}
+
 	return &cluster.Cluster{
 		Name: service.Name,
 		TransportSocket: transportSocket,
@@ -101,35 +157,7 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 			TypedConfig: dnsResolverConfig,
 		},
 		LbPolicy: cluster.Cluster_ROUND_ROBIN,
-		HealthChecks: []*core.HealthCheck{
-			&core.HealthCheck{
-				Timeout: &durationpb.Duration{
-					Seconds: service.HealthCheck.Timeout.Nanoseconds() / 1000000000,
-					Nanos:   int32(service.HealthCheck.Timeout.Nanoseconds() - service.HealthCheck.Timeout.Round(time.Second).Nanoseconds()),
-				},
-				Interval: &durationpb.Duration{
-					Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
-					Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
-				},
-				NoTrafficInterval: &durationpb.Duration{
-					Seconds: service.HealthCheck.Interval.Nanoseconds() / 1000000000,
-					Nanos:   int32(service.HealthCheck.Interval.Nanoseconds() - service.HealthCheck.Interval.Round(time.Second).Nanoseconds()),
-				},
-				HealthyThreshold:   &wrapperspb.UInt32Value{Value: service.HealthCheck.HealthyThreshold},
-				UnhealthyThreshold: &wrapperspb.UInt32Value{Value: service.HealthCheck.UnhealthyThreshold},
-				ReuseConnection:    &wrapperspb.BoolValue{Value: false},
-				HealthChecker: &core.HealthCheck_TcpHealthCheck_{
-					TcpHealthCheck: &core.HealthCheck_TcpHealthCheck{
-						Send: &core.HealthCheck_Payload{
-							Payload: &core.HealthCheck_Payload_Text{
-								Text: "0101",
-							},
-						},
-						Receive: []*core.HealthCheck_Payload{},
-					},
-				},
-			},
-		},
+		//HealthChecks: []*core.HealthCheck{&healthCheck},
 		CircuitBreakers: &cluster.CircuitBreakers{
 			Thresholds: []*cluster.CircuitBreakers_Thresholds{
 				&cluster.CircuitBreakers_Thresholds{
@@ -218,7 +246,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 		}
 
-		if service.TlsTermination.UseHttpListener{
+		if service.TlsTermination.HttpListener.Enabled {
 			downTlsCont.CommonTlsContext.AlpnProtocols = []string{"h2", "http/1.1"}
 		}
 
@@ -244,7 +272,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 		},
 	}
 
-	if !service.TlsTermination.UseHttpListener {
+	if !service.TlsTermination.HttpListener.Enabled {
 		tcpProxy, err := anypb.New(&tcpproxy.TcpProxy{
 			StatPrefix: fmt.Sprintf("%s_listener_tcp_proxy", service.Name),
 			ClusterSpecifier: &tcpproxy.TcpProxy_Cluster{service.Name},
@@ -272,7 +300,7 @@ func getListener(service parameters.ExposedService, dnsServers []parameters.DnsS
 			},
 		})
 	} else {
-		httpParams := service.TlsTermination.HttpParameters
+		httpParams := service.TlsTermination.HttpListener
 
 		router, err := anypb.New(&httprouter.Router{})
 		if err != nil {
