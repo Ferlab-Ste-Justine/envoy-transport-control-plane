@@ -20,7 +20,6 @@ import (
 	cares "github.com/envoyproxy/go-control-plane/envoy/extensions/network/dns_resolver/cares/v3"
 	tls "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	envoytype "github.com/envoyproxy/go-control-plane/envoy/type/v3"
-	//matcher "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
@@ -62,16 +61,6 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 								Filename: service.TlsTermination.ClusterCaCertificate,
 							},
 						},
-						/*MatchTypedSubjectAltNames: []*tls.SubjectAltNameMatcher{
-							&tls.SubjectAltNameMatcher{
-								SanType: tls.SubjectAltNameMatcher_DNS,
-								Matcher: &matcher.StringMatcher{
-									MatchPattern: &matcher.StringMatcher_Exact{
-										Exact: service.ClusterDomain,
-									},
-								},
-							},
-						},*/
 					},
 				},
 				TlsCertificates: []*tls.TlsCertificate{
@@ -157,7 +146,7 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 			TypedConfig: dnsResolverConfig,
 		},
 		LbPolicy: cluster.Cluster_ROUND_ROBIN,
-		//HealthChecks: []*core.HealthCheck{&healthCheck},
+		HealthChecks: []*core.HealthCheck{&healthCheck},
 		CircuitBreakers: &cluster.CircuitBreakers{
 			Thresholds: []*cluster.CircuitBreakers_Thresholds{
 				&cluster.CircuitBreakers_Thresholds{
