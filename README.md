@@ -73,8 +73,8 @@ services:
         enabled: Whether to use an http healthcheck instead of a tcp connection check
         path: Path of the health check http request
         status_code_range: Range of acceptable status codes
-          First: First accepted status code in the range
-          Last: Last accepted status code in the range
+          start: First accepted status code in the range
+          end: Last accepted status code in the range
     access_log_format: Format for the access logs of the first service. See: https://www.envoyproxy.io/docs/envoy/v1.25.2/configuration/observability/access_log/usage#config-access-log-format-strings
     tls_termination: 
       listener_certificate: Path to a tls certificate to present to clients if the service should perform tls termination as opposed to tls passthrough. 

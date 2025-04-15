@@ -127,8 +127,8 @@ func getCluster(service parameters.ExposedService, dnsServers []parameters.DnsSe
 				Path: service.HealthCheck.Http.Path,
 				ExpectedStatuses: []*envoytype.Int64Range{
 					&envoytype.Int64Range{
-						Start: service.HealthCheck.Http.StatusCodeRange.First,
-						End: service.HealthCheck.Http.StatusCodeRange.Last + 1,
+						Start: service.HealthCheck.Http.StatusCodeRange.Start,
+						End: service.HealthCheck.Http.StatusCodeRange.End + 1,
 					},
 				},
 			},

@@ -28,8 +28,8 @@ type HealthCheck struct {
 }
 
 type StatusCodeRange struct {
-	First int64
-	Last int64
+	Start int64
+	End   int64
 }
 
 type HttpHealthCheck struct {
